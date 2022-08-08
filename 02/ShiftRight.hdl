@@ -8,5 +8,5 @@ CHIP ShiftRight{
     OUT out[16];
      
     PARTS:
-	// Put you code here:
+	And16(a[15]=in[15],a[0..14]=in[1..15], b=true, out=out);
 }
