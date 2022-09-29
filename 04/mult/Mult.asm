@@ -56,16 +56,10 @@ M=0;
 (LOOP_UPDATE)
     @x
     D = M;
-    @tmp
-    M = D;
-    @x
     M = M + D;
 
     @mask
     D = M;
-    @tmp
-    M = D;
-    @mask
     M = M + D;
 
 @15 // Max iteration
