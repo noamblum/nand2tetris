@@ -7,8 +7,9 @@ Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 import os
 import sys
 import typing
+
 from SymbolTable import SymbolTable
-from Parser import Parser
+from Parser import Parser, L_COMMAND, A_COMMAND, C_COMMAND
 from Code import Code
 
 
@@ -81,8 +82,48 @@ def assemble_file(
     fails, the assembler that generated MyProg.hack must be buggy; otherwise,
     it may be OK.
     """
-    # Your code goes here!
-    pass
+    sym_table = SymbolTable()
+
+    # First pass
+    p = Parser(input_file)
+    command_num = 0
+    while True:
+        if p.command_type() == L_COMMAND:
+            sym_table.add_entry(p.symbol(), command_num)
+        else:
+            command_num += 1
+        if not p.has_more_commands(): break
+        p.advance()
+        
+    # Second pass
+    input_file.seek(0, 0)
+    p = Parser(input_file)
+    next_available_memory = 16
+    while True:
+        command_type = p.command_type()
+        if command_type == A_COMMAND:
+            sym = p.symbol()
+            addr = 0
+            if not sym.isdigit():
+                if not sym_table.contains(sym):
+                    sym_table.add_entry(sym, next_available_memory)
+                    next_available_memory += 1
+                addr = sym_table.get_address(sym)
+            else:
+                addr = int(sym)
+            output_file.write(int2bin(addr) + "\n")
+            
+        elif command_type == C_COMMAND:
+            dest = Code.dest(p.dest())
+            comp = Code.comp(p.comp())
+            jump = Code.jump(p.jump())
+            output_file.write("111" + comp + dest + jump + "\n")
+        if not p.has_more_commands(): break
+        p.advance()
+
+
+def int2bin(num):
+    return '{0:016b}'.format(num)
 
 
 if "__main__" == __name__:

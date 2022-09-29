@@ -5,6 +5,17 @@ and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+import re
+
+COMMENT = '//'
+A_COMMAND = "A_COMMAND"
+L_COMMAND = "L_COMMAND"
+C_COMMAND = "C_COMMAND"
+A_PREFIX = '@'
+L_PREFIX = '('
+L_SUFFIX = ')'
+DEST_INDICATOR = '='
+JUMP_INDICATOR = ';'
 
 
 class Parser:
@@ -20,10 +31,20 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
-        # Your code goes here!
-        # A good place to start is:
-        # input_lines = input_file.read().splitlines()
-        pass
+        self.__input_file = input_file
+        self.__current_command = self.__find_next_command()
+        self.__next_command = self.__find_next_command()
+
+    def __find_next_command(self) -> str:
+        next_line = self.__input_file.readline()
+        whitespace = re.compile(r"\s+")
+        while next_line != '':
+            line_without_comments = next_line.split(COMMENT)[0]
+            command = whitespace.sub("", line_without_comments)
+            if command != '':
+                return command
+            next_line = self.__input_file.readline()
+        return ''
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -31,15 +52,15 @@ class Parser:
         Returns:
             bool: True if there are more commands, False otherwise.
         """
-        # Your code goes here!
-        pass
+        return self.__next_command != ''
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current command.
         Should be called only if has_more_commands() is true.
         """
-        # Your code goes here!
-        pass
+        if self.has_more_commands():
+            self.__current_command = self.__next_command
+            self.__next_command = self.__find_next_command()
 
     def command_type(self) -> str:
         """
@@ -49,8 +70,10 @@ class Parser:
             "C_COMMAND" for dest=comp;jump
             "L_COMMAND" (actually, pseudo-command) for (Xxx) where Xxx is a symbol
         """
-        # Your code goes here!
-        pass
+        if self.__current_command.startswith(A_PREFIX): return A_COMMAND
+        if self.__current_command.startswith(L_PREFIX): return L_COMMAND
+        return C_COMMAND
+
 
     def symbol(self) -> str:
         """
@@ -59,8 +82,12 @@ class Parser:
             (Xxx). Should be called only when command_type() is "A_COMMAND" or 
             "L_COMMAND".
         """
-        # Your code goes here!
-        pass
+        command_type = self.command_type()
+        if command_type == A_COMMAND:
+            return self.__current_command[1:]
+        if command_type == L_COMMAND:
+            return self.__current_command[1:-1]
+        return ''
 
     def dest(self) -> str:
         """
@@ -68,8 +95,10 @@ class Parser:
             str: the dest mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        if self.command_type() == C_COMMAND:
+            if DEST_INDICATOR not in self.__current_command: return ''
+            return self.__current_command.split(DEST_INDICATOR)[0]
+        return ''
 
     def comp(self) -> str:
         """
@@ -77,8 +106,11 @@ class Parser:
             str: the comp mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        if self.command_type() == C_COMMAND:
+            dest_and_comp = self.__current_command.split(JUMP_INDICATOR)[0]
+            if DEST_INDICATOR not in dest_and_comp: return dest_and_comp
+            return dest_and_comp.split(DEST_INDICATOR)[1]
+        return ''
 
     def jump(self) -> str:
         """
@@ -86,5 +118,7 @@ class Parser:
             str: the jump mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        if self.command_type() == C_COMMAND:
+            if JUMP_INDICATOR not in self.__current_command: return ''
+            return self.__current_command.split(JUMP_INDICATOR)[1]
+        return ''
