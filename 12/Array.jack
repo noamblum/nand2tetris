@@ -1,7 +1,7 @@
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
-// File name: projects/12/Array.jack
+// File name: projects/12/Memory.jack
 
 /**
  * Represents an array.
@@ -12,7 +12,6 @@
  * data types.
  */
 class Array {
-
     /** Constructs a new Array of the given size. */
     function Array new(int size) {
     }

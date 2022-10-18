@@ -69,6 +69,10 @@ class Code:
         elif re.match(r"^[AM]-D$", mnemonic): comp = "000111"
         elif re.match(r"^([AM]&D|D&[AM])$", mnemonic): comp = "000000"
         elif re.match(r"^([AM]\|D|D\|[AM])$", mnemonic): comp = "010101"
+        elif re.match(r"^[AM]<<$", mnemonic): comp = "100000"
+        elif mnemonic == "D<<": comp = "110000"
+        elif re.match(r"^[AM]>>$", mnemonic): comp = "000000"
+        elif mnemonic == "D>>": comp = "010000"
 
         return a_bit + comp
 

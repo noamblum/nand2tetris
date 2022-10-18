@@ -117,7 +117,9 @@ def assemble_file(
             dest = Code.dest(p.dest())
             comp = Code.comp(p.comp())
             jump = Code.jump(p.jump())
-            output_file.write("111" + comp + dest + jump + "\n")
+            prefix = "111"
+            if ">>" in p.comp() or "<<" in p.comp(): prefix = "101"
+            output_file.write(prefix + comp + dest + jump + "\n")
         if not p.has_more_commands(): break
         p.advance()
 
