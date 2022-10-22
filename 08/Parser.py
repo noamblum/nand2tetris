@@ -16,6 +16,9 @@ C_POP = 'C_POP'
 C_LABEL = 'C_LABEL'
 C_GOTO = 'C_GOTO'
 C_IF = 'C_IF'
+C_FUNCTION = 'C_FUNCTION'
+C_RETURN = 'C_RETURN'
+C_CALL = 'C_CALL'
 
 class Parser:
     """
@@ -88,7 +91,14 @@ class Parser:
                 return C_GOTO
             if self.__current_command[0] == "if-goto":
                 return C_IF
+            if self.__current_command[0] == "function":
+                return C_FUNCTION
+            if self.__current_command[0] == "call":
+                return C_CALL
         
+        
+        if self.__current_command[0] == "return":
+                return C_RETURN
         return C_ARITHMETIC
 
     def arg1(self) -> str:

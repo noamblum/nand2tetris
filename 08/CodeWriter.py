@@ -40,6 +40,7 @@ class CodeWriter:
         self.__output_stream = output_stream
         self.__filename = ''
         self.__compare_num = 0
+        self.__return_num = 1
 
     def set_file_name(self, filename: str) -> None:
         """Informs the code writer that the translation of a new VM file is 
@@ -120,6 +121,15 @@ class CodeWriter:
         self.__write_lines_with_separator(lines)
         self.__compare_num += 1
 
+    def write_bootstrap(self):
+        self.__write_lines_with_separator([
+            "// SP = 256",
+            "@256",
+            "D=A",
+            "@SP",
+            "M=D"
+        ])
+        self.write_call("Sys.init", 0)
 
     def write_push_pop(self, command: str, segment: str, index: int) -> None:
         """Writes assembly code that is the translation of the given 
@@ -277,9 +287,10 @@ class CodeWriter:
             function_name (str): the name of the function.
             n_vars (int): the number of local variables of the function.
         """
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
-        pass
+        self.__write_lines_with_separator([f"({self.__filename}.{function_name})"])
+        for _ in range(n_vars):
+            self.__write_push("constant", 0)
+
     
     def write_call(self, function_name: str, n_args: int) -> None:
         """Writes assembly code that affects the call command. 
@@ -297,12 +308,99 @@ class CodeWriter:
             function_name (str): the name of the function to call.
             n_args (int): the number of arguments of the function.
         """
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
-        pass
+        return_label = f"{self.__filename}$ret.{self.__return_num}"
+        self.__return_num += 1
+        
+        def __push_label(ptr: str):
+            self.__write_lines_with_separator([
+                f"// push {ptr}",
+                f"@{ptr}",
+                "D=M",
+                "@SP",
+                "A=M",
+                "M=D",
+                "@SP",
+                "M=M+1"
+            ])
+        
+        self.__write_lines_with_separator([
+                f"// push return_addr",
+                f"@{return_label}",
+                "D=A",
+                "@SP",
+                "A=M",
+                "M=D",
+                "@SP",
+                "M=M+1"
+        ])
+        __push_label("LCL")
+        __push_label("ARG")
+        __push_label("THIS")
+        __push_label("THAT")
+        self.__write_lines_with_separator([
+                "// ARG = SP - 5 - n_args",
+                f"@{5 + n_args}",
+                "D=A",
+                "@SP",
+                "D=M-D",
+                "@ARG",
+                "M=D",
+                "// LCL = SP",
+                "@SP",
+                "D=M",
+                "@LCL",
+                "M=D",
+                f"// goto {function_name}",
+                f"@{function_name}",
+                "0;JMP",
+                f"({return_label})"
+            ])
+
     
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
-        pass
+        ENDFRAME = "R13"
+        def __restore_label_from_endframe(label: str, distance: int):
+            self.__write_lines_with_separator([
+                f"// {label} = *(ENDFRAME - {distance})",
+                f"@{distance}",
+                "D=A",
+                f"@{ENDFRAME}",
+                "A=M-D",
+                "D=M",
+                f"@{label}",
+                "M=D"
+            ])
+
+        self.__write_lines_with_separator([
+            "// ENDFRAME = LCL",
+            "@LCL",
+            "D=M",
+            f"@{ENDFRAME}",
+            "M=D",
+            "// *ARG = pop()",
+            "@SP",
+            "A=M-1",
+            "D=M",
+            "@ARG",
+            "A=M",
+            "M=D",
+            "// SP = ARG + 1",
+            "@ARG",
+            "D=M",
+            "@SP",
+            "M=D+1",
+        ])
+        __restore_label_from_endframe("THAT", 1)
+        __restore_label_from_endframe("THIS", 2)
+        __restore_label_from_endframe("ARG", 3)
+        __restore_label_from_endframe("LCL", 4)
+        self.__write_lines_with_separator([
+            "// goto *(ENDFRAME - 5)",
+            f"@5",
+            "D=A",
+            f"@{ENDFRAME}",
+            "A=M-D",
+            "A=M",
+            "0;JMP"
+        ])

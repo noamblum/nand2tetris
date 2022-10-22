@@ -9,7 +9,7 @@ import sys
 import typing
 
 
-from Parser import C_POP, C_PUSH, C_ARITHMETIC, C_LABEL, C_GOTO, C_IF
+from Parser import C_POP, C_PUSH, C_ARITHMETIC, C_LABEL, C_GOTO, C_IF, C_FUNCTION, C_RETURN, C_CALL
 from Parser import Parser
 from CodeWriter import CodeWriter
 
@@ -29,6 +29,10 @@ def translate_file(
     cw = CodeWriter(output_file)
     cw.set_file_name(os.path.splitext(os.path.basename(input_file.name))[0])
 
+    if bootstrap:
+        pass
+        cw.write_bootstrap()
+
     while True:
         output_file.write(f"//{p.get_current_command()}\n")
         command_type = p.command_type()
@@ -42,6 +46,13 @@ def translate_file(
             cw.write_goto(p.arg1())
         elif command_type == C_IF:
             cw.write_if(p.arg1())
+        elif command_type == C_FUNCTION:
+            cw.write_function(p.arg1(), p.arg2())
+        elif command_type == C_RETURN:
+            cw.write_return()
+        elif command_type == C_CALL:
+            cw.write_call(p.arg1(), p.arg2())
+
         if not p.has_more_commands(): break
         p.advance()
 
