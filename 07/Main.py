@@ -109,6 +109,7 @@ def translate_file(
     """
     p = Parser(input_file)
     cw = CodeWriter(output_file)
+    cw.set_file_name(os.path.splitext(os.path.basename(input_file.name))[0])
 
     while True:
         output_file.write(f"//{p.get_current_command()}\n")
