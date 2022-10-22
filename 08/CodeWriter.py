@@ -360,6 +360,7 @@ class CodeWriter:
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
         ENDFRAME = "R13"
+        RET_ADDR = "R14"
         def __restore_label_from_endframe(label: str, distance: int):
             self.__write_lines_with_separator([
                 f"// {label} = *(ENDFRAME - {distance})",
@@ -377,6 +378,14 @@ class CodeWriter:
             "@LCL",
             "D=M",
             f"@{ENDFRAME}",
+            "M=D",
+            "// RET_ADDR = *(ENDFRAME - 5)",
+            f"@5",
+            "D=A",
+            f"@{ENDFRAME}",
+            "A=M-D",
+            "D=M",
+            f"@{RET_ADDR}",
             "M=D",
             "// *ARG = pop()",
             "@SP",
@@ -396,11 +405,8 @@ class CodeWriter:
         __restore_label_from_endframe("ARG", 3)
         __restore_label_from_endframe("LCL", 4)
         self.__write_lines_with_separator([
-            "// goto *(ENDFRAME - 5)",
-            f"@5",
-            "D=A",
-            f"@{ENDFRAME}",
-            "A=M-D",
+            "// goto *(RET_ADDR - 5)",
+            f"@{RET_ADDR}",
             "A=M",
             "0;JMP"
         ])
