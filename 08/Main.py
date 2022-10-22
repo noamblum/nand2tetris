@@ -1,13 +1,15 @@
-"""
-This file is part of nand2tetris, as taught in The Hebrew University, and
-was written by Aviv Yaish. It is an extension to the specifications given
-[here](https://www.nand2tetris.org) (Shimon Schocken and Noam Nisan, 2017),
-as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
-Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+"""This file is part of nand2tetris, as taught in The Hebrew University,
+and was written by Aviv Yaish according to the specifications given in  
+https://www.nand2tetris.org (Shimon Schocken and Noam Nisan, 2017)
+and as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0 
+Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import os
 import sys
 import typing
+
+
+from Parser import C_POP, C_PUSH, C_ARITHMETIC, C_LABEL, C_GOTO, C_IF
 from Parser import Parser
 from CodeWriter import CodeWriter
 
@@ -23,8 +25,25 @@ def translate_file(
         bootstrap (bool): if this is True, the current file is the 
             first file we are translating.
     """
-    # Your code goes here!
-    pass
+    p = Parser(input_file)
+    cw = CodeWriter(output_file)
+    cw.set_file_name(os.path.splitext(os.path.basename(input_file.name))[0])
+
+    while True:
+        output_file.write(f"//{p.get_current_command()}\n")
+        command_type = p.command_type()
+        if command_type in (C_POP, C_PUSH):
+            cw.write_push_pop(command_type, p.arg1(), p.arg2())
+        elif command_type == C_ARITHMETIC:
+            cw.write_arithmetic(p.arg1())
+        elif command_type == C_LABEL:
+            cw.write_label(p.arg1())
+        elif command_type == C_GOTO:
+            cw.write_goto(p.arg1())
+        elif command_type == C_IF:
+            cw.write_if(p.arg1())
+        if not p.has_more_commands(): break
+        p.advance()
 
 
 if "__main__" == __name__:
