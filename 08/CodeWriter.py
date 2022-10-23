@@ -287,7 +287,8 @@ class CodeWriter:
             function_name (str): the name of the function.
             n_vars (int): the number of local variables of the function.
         """
-        self.__write_lines_with_separator([f"({self.__filename}.{function_name})"])
+        label = f"({function_name})" if function_name.startswith(f"{self.__filename}.") else f"({self.__filename}.{function_name})"
+        self.__write_lines_with_separator([label])
         for _ in range(n_vars):
             self.__write_push("constant", 0)
 
