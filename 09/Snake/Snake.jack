@@ -1,0 +1,30 @@
+class Snake {
+
+    field Array blocks;
+    field int curLength;
+    static int maxSnakeSize;
+
+    constructor Snake new(int startX, int startY, int startLength) {
+        var int i, dir;
+        let blocks = Array.new(maxSnakeSize);
+        let dir = SnakeBlock.UP;
+        let i = 0;
+        while (i < startLength) {
+            let blocks[i] = SnakeBlock.new(startX, startY + i, dir);
+            do blocks[i].draw();
+            let i = i + 1;
+        }
+        let curLength = startLength;
+        return this;
+   	}
+
+   	method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+   	}
+
+    function void init () {
+        let maxSnakeSize = 64;
+        return;
+    }
+}

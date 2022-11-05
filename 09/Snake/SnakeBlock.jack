@@ -1,0 +1,106 @@
+class SnakeBlock {
+
+
+    field int x, y; // screen location of the block's top-left corner, as grid coordinates
+    field int direction; // A number representing the direction of the block's movement
+
+    static int UP, DOWN, LEFT, RIGHT;
+
+    constructor SnakeBlock new(int Ax, int Ay, int Adirection) {
+        let x = Ax;
+        let y = Ay;
+        let direction = Adirection;
+        do draw();
+        return this;
+   	}
+
+   	method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+   	}
+
+   /** Draws the square on the screen. */
+   	method void draw() {
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x * 16, y * 16, x * 16 + 14, y * 16 + 14);
+        return;
+   	}
+
+   	/** Removes the block from the screen. */
+   	method void clear() {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x * 16, y * 16, x * 16 + 14, y * 16 + 14);
+        return;
+   	}
+
+   	method int getX() {
+        return x;
+   	}
+
+   	method int getY() {
+        return y;
+   	}
+
+   	method int getDirection() {
+        return direction;
+   	}
+
+   	method void setX(int Ax) {
+        let x = Ax;
+        return;
+   	}
+
+   	method void setY(int Ay) {
+        let y = Ay;
+        return;
+   	}
+
+   	method void setDirection(int Adirection) {
+        let direction = Adirection;
+        return;
+   	}
+
+   	method void move() {
+		if (direction = UP) {
+			if (y = 0) {
+				let y = 15;	
+			}
+			else {
+				let y = y - 1;
+			}
+		}
+		if (direction = DOWN) {
+			if (y = 15) {
+				let y = 0;	
+			}
+			else {
+				let y = y + 1;
+			}
+		}
+		if (direction = LEFT) {
+			if (x = 0) {
+				let x = 31;	
+			}
+			else {
+				let x = x - 1;
+			}
+		}
+		if (direction = RIGHT) {
+			if (x = 31) {
+				let x = 0;	
+			}
+			else {
+				let x = x + 1;
+			}
+		}
+        return;
+   	}
+	
+	function void init () {
+		let UP = 0;
+        let DOWN = 1;
+        let LEFT = 2;
+        let RIGHT = 3;
+		return;
+	}
+}

@@ -11,7 +11,8 @@
   */
 class Main {
   function void main() {
-    // Your code goes here!
+    do SnakeBlock.init();
+    do Snake.init();
     return;
   }
 
