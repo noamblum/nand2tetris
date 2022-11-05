@@ -10,11 +10,13 @@
   * You can include as many classes and functions as you want.
   */
 class Main {
-  function void main() {
-    do SnakeBlock.init();
-    do Snake.init();
-    return;
-  }
+  	function void main() {
+    	var Snake s;
+    	do SnakeBlock.init();
+    	do Snake.init();
+		let s = Snake.new(4,4,4);
+    	return;
+	}
 
   // Your code goes here!
 }

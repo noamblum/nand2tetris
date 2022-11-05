@@ -3,15 +3,18 @@ class Snake {
     field Array blocks;
     field int curLength;
     static int maxSnakeSize;
+    static int UP, DOWN, LEFT, RIGHT;
 
     constructor Snake new(int startX, int startY, int startLength) {
         var int i, dir;
+        var SnakeBlock sb;
         let blocks = Array.new(maxSnakeSize);
-        let dir = SnakeBlock.UP;
         let i = 0;
         while (i < startLength) {
-            let blocks[i] = SnakeBlock.new(startX, startY + i, dir);
-            do blocks[i].draw();
+            let sb = SnakeBlock.new(startX, startY + i, UP);
+            let blocks[i] = sb;
+            do sb.draw();
+
             let i = i + 1;
         }
         let curLength = startLength;
@@ -25,6 +28,10 @@ class Snake {
 
     function void init () {
         let maxSnakeSize = 64;
+        let UP = 0;
+        let DOWN = 1;
+        let LEFT = 2;
+        let RIGHT = 3;
         return;
     }
 }
