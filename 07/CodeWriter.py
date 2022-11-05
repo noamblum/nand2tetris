@@ -101,15 +101,47 @@ class CodeWriter:
 
     def __write_compare(self, comparison: str):
         comparison = comparison.upper() # Return EQ, LT, GT
+        self.__write_compare_start()
+        self.__write_compare_same_sign(comparison)
+        self.__write_compare_different_sign(comparison)
+        self.__write_compare_end()
+        self.__compare_num += 1
+
+    def __write_compare_start(self):
         lines = [
+            f"// Comparison {self.__compare_num} start",
+            "// Check x >= 0",
+            "@SP",
+            "A=M-1",
+            "A=A-1",
+            "D=M",
+            f"@CMP_{self.__compare_num}_X_NEG",
+            "D;JLT",
+            "// If here than x >= 0, check y >= 0",
             "@SP",
             "A=M-1",
             "D=M",
-            "A=A-1",
-            "D=M-D",
-            f"@CMP_{self.__compare_num}_TRUE",
-            f"D;J{comparison}",
-            f"// Comparison {self.__compare_num} false",
+            f"@CMP_{self.__compare_num}_Y_NEG_X_POS",
+            "D;JLT",
+            "// If here than x >= 0 and y >= 0, goto same sign",
+            f"@CMP_{self.__compare_num}_SAME_SIGN",
+            "0;JMP",
+            f"(CMP_{self.__compare_num}_X_NEG)",
+            "// If here than x < 0, check y < 0",
+            "@SP",
+            "A=M-1",
+            "D=M",
+            f"@CMP_{self.__compare_num}_Y_POS_X_NEG",
+            "D;JGE",
+            "// If here than x < 0 and y < 0, goto same sign",
+            f"@CMP_{self.__compare_num}_SAME_SIGN",
+            "0;JMP",   
+        ]
+        self.__write_lines_with_separator(lines)
+
+    def __write_compare_end(self):
+        lines = [
+            f"(CMP_{self.__compare_num}_FALSE)",
             f"D={FALSE}",
             f"@CMP_{self.__compare_num}_END",
             "0;JMP",
@@ -118,7 +150,42 @@ class CodeWriter:
             f"(CMP_{self.__compare_num}_END)"
         ] + POP_2_AND_PUSH_D
         self.__write_lines_with_separator(lines)
-        self.__compare_num += 1
+        
+
+    def __write_compare_same_sign(self, comparison: str):
+        lines = [
+            f"(CMP_{self.__compare_num}_SAME_SIGN)",
+            "@SP",
+            "A=M-1",
+            "D=M",
+            "A=A-1",
+            "D=M-D",
+            f"@CMP_{self.__compare_num}_TRUE",
+            f"D;J{comparison}",
+            f"// Comparison {self.__compare_num} same sign false",
+            f"@CMP_{self.__compare_num}_FALSE",
+            "0;JMP"
+        ]
+        self.__write_lines_with_separator(lines)
+    
+    def __write_compare_different_sign(self, comparison: str):
+        lines = [
+            f"(CMP_{self.__compare_num}_Y_NEG_X_POS)",
+            "// Here x >= 0 and y < 0, which means x > y,  therefore TRUE iff checking gt",
+            f"@CMP_{self.__compare_num}_TRUE",
+            f"{'0' if comparison == 'GT' else '1'};JEQ",
+            f"@CMP_{self.__compare_num}_FALSE",
+            "0;JMP",
+            f"(CMP_{self.__compare_num}_Y_POS_X_NEG)",
+            "// Here x < 0 and y >= 0, which means x < y,  therefore TRUE iff checking lt",
+            f"@CMP_{self.__compare_num}_TRUE",
+            f"{'0' if comparison == 'LT' else '1'};JEQ",
+            f"@CMP_{self.__compare_num}_FALSE",
+            "0;JMP",
+            
+        ]
+        self.__write_lines_with_separator(lines)
+        
 
 
     def write_push_pop(self, command: str, segment: str, index: int) -> None:
