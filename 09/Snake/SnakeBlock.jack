@@ -21,17 +21,24 @@ class SnakeBlock {
 
    /** Draws the square on the screen. */
    	method void draw() {
-        do Screen.setColor(true);
-        do Screen.drawRectangle(x * 16, y * 16, x * 16 + 14, y * 16 + 14);
-        return;
+		do drawOrClear(true);
+		return;
    	}
 
    	/** Removes the block from the screen. */
    	method void clear() {
-        do Screen.setColor(false);
-        do Screen.drawRectangle(x * 16, y * 16, x * 16 + 14, y * 16 + 14);
-        return;
+        do drawOrClear(false);
+		return;
    	}
+
+	method void drawOrClear(boolean color) {
+		var int left, top;
+        do Screen.setColor(color);
+		let left = SnakeBoard.getLeft() + ((x * 16) + 1);
+		let top = SnakeBoard.getTop() + ((y * 16) + 1);
+        do Screen.drawRectangle(left, top, left + 14, top + 14);
+        return;
+	}
 
    	method int getX() {
         return x;
@@ -63,14 +70,14 @@ class SnakeBlock {
    	method void move() {
 		if (direction = UP) {
 			if (y = 0) {
-				let y = 15;	
+				let y = SnakeBoard.getHeight() - 1;	
 			}
 			else {
 				let y = y - 1;
 			}
 		}
 		if (direction = DOWN) {
-			if (y = 15) {
+			if (y = SnakeBoard.getHeight() - 1) {
 				let y = 0;	
 			}
 			else {
@@ -79,14 +86,14 @@ class SnakeBlock {
 		}
 		if (direction = LEFT) {
 			if (x = 0) {
-				let x = 31;	
+				let x = SnakeBoard.getWidth() - 1;	
 			}
 			else {
 				let x = x - 1;
 			}
 		}
 		if (direction = RIGHT) {
-			if (x = 31) {
+			if (x = SnakeBoard.getWidth() - 1) {
 				let x = 0;	
 			}
 			else {

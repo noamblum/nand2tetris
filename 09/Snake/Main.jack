@@ -11,10 +11,14 @@
   */
 class Main {
   	function void main() {
-    	var Snake s;
+    	var SnakeGame game;
+		// Magic numbers below make the board appear vertically centered on the right 75% of the screen
+		do SnakeBoard.init(22, 13, 24, 140);
+		do SnakeBoard.drawFrame();
     	do SnakeBlock.init();
     	do Snake.init();
-		let s = Snake.new(4,4,4);
+		let game = SnakeGame.new();
+		do game.run();
     	return;
 	}
 

@@ -1,0 +1,46 @@
+class SnakeBoard {
+    // The board height and width in blocks, and the top left corner of the board in screen coordinates.
+    static int W, H, Top, Left;
+
+    function void init (int WA, int HA, int TopA, int LeftA) {
+        let W = WA;
+        let H = HA;
+        let Top = TopA;
+        let Left = LeftA;
+        return;
+    }
+
+    function int getWidth() {
+        return W;
+    }
+
+    function int getHeight() {
+        return H;
+    }
+
+    function int getTop() {
+        return Top;
+    }
+
+    function int getLeft() {
+        return Left;
+    }
+
+    /** Draws a 1-block wide frame around the board */
+    function void drawFrame () {
+        // Top of frame
+        do Screen.drawRectangle(Left - 16, Top - 16, Left + ((W + 1) * 16), Top);
+
+        // Bottom of frame
+        do Screen.drawRectangle(Left - 16, Top + (H * 16), Left + ((W + 1) * 16), Top + ((H + 1) * 16));
+
+        // Left of frame
+        do Screen.drawRectangle(Left - 16, Top, Left, Top + (H * 16));
+
+        // Right of frame
+        do Screen.drawRectangle(Left + (W * 16), Top, Left + ((W + 1) * 16), Top + (H * 16));
+
+        return;
+
+    }
+}

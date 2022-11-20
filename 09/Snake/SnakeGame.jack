@@ -1,0 +1,17 @@
+class SnakeGame {
+
+    field Snake s;
+    constructor SnakeGame new(){
+        return this;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+   	}
+
+    method void run() {
+        let s = Snake.new(4,4,4);
+        return;
+    }
+}
