@@ -12,6 +12,10 @@ class SnakeGame {
 
     method void run() {
         let s = Snake.new(4,4,4);
+        while (true){
+            do Sys.wait(1000);
+            do s.move();
+        }
         return;
     }
 }

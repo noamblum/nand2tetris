@@ -26,6 +26,36 @@ class Snake {
         return;
    	}
 
+    /** Moves the snake, redrawing blocks as needed */
+    method void move() {
+        var int i, prevDir;
+        var SnakeBlock sb;
+        let prevDir = -1;
+        while (i < curLength) {
+            let sb = blocks[i];
+
+            if (i = (curLength - 1)) {
+                do sb.clear();
+            }
+
+            do sb.move();
+            
+
+            if (i = 0) {
+                do sb.draw();
+            }
+            else {
+                do sb.setDirection(prevDir);
+            }
+
+            let prevDir = sb.getDirection();
+
+            let i = i + 1;
+        }
+
+        return;
+    }
+
     function void init () {
         let maxSnakeSize = 64;
         let UP = 0;
