@@ -77,7 +77,7 @@ class SnakeBlock {
 			}
 		}
 		if (direction = DOWN) {
-			if (y = SnakeBoard.getHeight() - 1) {
+			if (y = (SnakeBoard.getHeight() - 1)) {
 				let y = 0;	
 			}
 			else {
@@ -93,7 +93,7 @@ class SnakeBlock {
 			}
 		}
 		if (direction = RIGHT) {
-			if (x = SnakeBoard.getWidth() - 1) {
+			if (x = (SnakeBoard.getWidth() - 1)) {
 				let x = 0;	
 			}
 			else {
