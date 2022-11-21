@@ -5,7 +5,7 @@ class SnakeGame {
     static int UP, DOWN, LEFT, RIGHT;
 
     constructor SnakeGame new(){
-        let s = Snake.new(4,4,4);
+        let s = Snake.new(7,7,7);
         return this;
     }
 
@@ -33,10 +33,16 @@ class SnakeGame {
             if (key = 132) { let direction = RIGHT; }   // right arrow
             if (~(direction = -1)) { do s.turn(direction); }
             do s.move();
+            if (s.isEatingSelf()){
+                do SnakeGame.printLost();
+                let exit = true;
+            }
             do Sys.wait(200);
         } // while
         return;
     }
+
+
 
     function void init () {
         let UP = 0;
@@ -67,6 +73,12 @@ class SnakeGame {
         do Output.println();
         do Output.println();
         do Output.printString("  Good luck!");
+        return;
+    }
+
+        function void printLost() {
+        do Output.moveCursor(15,0);
+        do Output.printString("  You lost :(");
         return;
     }
 }

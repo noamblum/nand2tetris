@@ -66,6 +66,22 @@ class Snake {
         return;
     }
 
+    /** Checks whether or not the snake is eating itself */
+    method boolean isEatingSelf() {
+        var int i;
+        var SnakeBlock head, sb;
+        let head = blocks[0];
+        let i = 1;
+        while (i < curLength) {
+            let sb = blocks[i];
+            if ((head.getX() = sb.getX()) & (head.getY() = sb.getY())) {
+                return true;
+            }
+            let i = i + 1;
+        }
+        return false;
+    }
+
     function void init () {
         let maxSnakeSize = 64;
         let UP = 0;
