@@ -17,6 +17,7 @@ class Main {
 		do SnakeBoard.drawFrame();
     	do SnakeBlock.init();
     	do Snake.init();
+		do SnakeGame.init();
 		let game = SnakeGame.new();
 		do game.run();
     	return;

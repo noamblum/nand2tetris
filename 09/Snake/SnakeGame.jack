@@ -1,7 +1,11 @@
 class SnakeGame {
 
     field Snake s;
+
+    static int UP, DOWN, LEFT, RIGHT;
+
     constructor SnakeGame new(){
+        let s = Snake.new(4,4,4);
         return this;
     }
 
@@ -11,11 +15,32 @@ class SnakeGame {
    	}
 
     method void run() {
-        let s = Snake.new(4,4,4);
-        while (true){
-            do Sys.wait(1000);
+
+        var int direction;
+        var char key;  // the key currently pressed by the user
+        var boolean exit;
+        let exit = false;
+      
+        while (~exit) {
+            let key = Keyboard.keyPressed();
+            let direction = -1;
+            if (key = 81)  { let exit = true; }     // q key
+            if (key = 131) { let direction = UP; }   // up arrow
+            if (key = 133) { let direction = DOWN; }   // down arrow
+            if (key = 130) { let direction = LEFT; }   // left arrow
+            if (key = 132) { let direction = RIGHT; }   // right arrow
+            if (~(direction = -1)) { do s.turn(direction); }
             do s.move();
-        }
+            do Sys.wait(200);
+        } // while
+        return;
+    }
+
+    function void init () {
+        let UP = 0;
+        let DOWN = 1;
+        let LEFT = 2;
+        let RIGHT = 3;
         return;
     }
 }

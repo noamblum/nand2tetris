@@ -11,7 +11,7 @@ class Snake {
         let blocks = Array.new(maxSnakeSize);
         let i = 0;
         while (i < startLength) {
-            let sb = SnakeBlock.new(startX, startY + i, UP);
+            let sb = SnakeBlock.new(startX, startY - i, DOWN);
             let blocks[i] = sb;
             do sb.draw();
 
@@ -28,9 +28,11 @@ class Snake {
 
     /** Moves the snake, redrawing blocks as needed */
     method void move() {
-        var int i, prevDir;
+        var int i, prevDir, curDir;
         var SnakeBlock sb;
         let prevDir = -1;
+        let curDir = -1;
+        let i = 0;
         while (i < curLength) {
             let sb = blocks[i];
 
@@ -40,7 +42,7 @@ class Snake {
 
             do sb.move();
             
-
+            let curDir = sb.getDirection();
             if (i = 0) {
                 do sb.draw();
             }
@@ -48,11 +50,19 @@ class Snake {
                 do sb.setDirection(prevDir);
             }
 
-            let prevDir = sb.getDirection();
+            let prevDir = curDir;
 
             let i = i + 1;
         }
 
+        return;
+    }
+
+    /** Turns the snake's head in the specified direction */
+    method void turn (int newDir) {
+        var SnakeBlock head;
+        let head = blocks[0];
+        do head.setDirection(newDir);
         return;
     }
 
