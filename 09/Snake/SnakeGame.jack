@@ -20,6 +20,8 @@ class SnakeGame {
         var char key;  // the key currently pressed by the user
         var boolean exit;
         let exit = false;
+
+        do SnakeGame.printInstructions();
       
         while (~exit) {
             let key = Keyboard.keyPressed();
@@ -41,6 +43,30 @@ class SnakeGame {
         let DOWN = 1;
         let LEFT = 2;
         let RIGHT = 3;
+        return;
+    }
+
+    function void printInstructions() {
+        do Output.println();
+        do Output.printString("Welcome to our");
+        do Output.println();
+        do Output.printString("  Snake game!");
+        do Output.println();
+        do Output.println();
+        do Output.println();
+        do Output.printString("  Control the");
+        do Output.println();
+        do Output.printString("snake with the");
+        do Output.println();
+        do Output.printString("  arrow keys");
+        do Output.println();
+        do Output.println();
+        do Output.println();
+        do Output.printString("Press q to exit");
+        do Output.println();
+        do Output.println();
+        do Output.println();
+        do Output.printString("  Good luck!");
         return;
     }
 }
