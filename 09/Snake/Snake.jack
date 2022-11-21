@@ -82,8 +82,38 @@ class Snake {
         return false;
     }
 
+    method void incrementLength() {
+        var SnakeBlock sb;
+        var int newX, newY, newDir;
+        let sb = blocks[curLength - 1];
+        let newDir = sb.getDirection();
+
+        if (newDir = UP) {
+            let newX = sb.getX();
+            let newY = sb.getY() + 1;
+        }
+        if (newDir = DOWN) {
+            let newX = sb.getX();
+            let newY = sb.getY() - 1;
+        }
+        if (newDir = LEFT) {
+            let newX = sb.getX() + 1;
+            let newY = sb.getY();
+        }
+        if (newDir = RIGHT) {
+            let newX = sb.getX() - 1;
+            let newY = sb.getY();
+        }
+        let sb = SnakeBlock.new(newX, newY, newDir);
+        do sb.draw();
+        let blocks[curLength] = sb;
+        let curLength = curLength + 1;
+
+        return;
+    }
+
     function void init () {
-        let maxSnakeSize = 64;
+        let maxSnakeSize = SnakeBoard.getWidth() * SnakeBoard.getHeight();
         let UP = 0;
         let DOWN = 1;
         let LEFT = 2;
