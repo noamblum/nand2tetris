@@ -19,8 +19,9 @@ class SnakeGame {
 
         var int direction, headX, headY;
         var char key;  // the key currently pressed by the user
-        var boolean exit;
+        var boolean exit, gameOver;
         let exit = false;
+        let gameOver = false;
 
         do SnakeGame.printInstructions();
         do plantApple();
@@ -42,8 +43,27 @@ class SnakeGame {
             let headY = s.getHeadY();
 
             if (s.isEatingSelf()){
+                let gameOver = true;
+            }
+
+            if (gameOver) {
                 do SnakeGame.printLost();
-                let exit = true;
+                while (gameOver) {
+                    let key = Keyboard.keyPressed();
+                    if (key = 81)  {
+                        let exit = true;
+                        let gameOver = false;
+                    }     // q key
+
+                    if (key = 82)  {
+                        let gameOver = false;
+                        do clearApple();
+                        do s.clear();
+                        let s = Snake.new(4,4,3);
+                        do plantApple();
+                        do SnakeGame.unprintLost();
+                    }     // r key
+                }
             }
 
             if ((headX = appleX) & (headY = appleY)) {
@@ -65,8 +85,18 @@ class SnakeGame {
     }
 
     method void drawApple() {
+        do drawOrClearApple(true);
+        return;
+    }
+
+    method void clearApple() {
+        do drawOrClearApple(false);
+        return;
+    }
+
+    method void drawOrClearApple(boolean color) {
         var int left, top;
-        do Screen.setColor(true);
+        do Screen.setColor(color);
 		let left = SnakeBoard.getLeft() + ((appleX * 16) + 3);
 		let top = SnakeBoard.getTop() + ((appleY * 16) + 3);
         do Screen.drawRectangle(left, top, left + 10, top + 10);
@@ -106,9 +136,23 @@ class SnakeGame {
         return;
     }
 
-        function void printLost() {
+    function void printLost() {
         do Output.moveCursor(15,0);
-        do Output.printString("  You lost :(");
+        do Output.printString("  Game over :(");
+        do Output.moveCursor(16,0);
+        do Output.printString("  Press r to");
+        do Output.println();
+        do Output.printString("    restart");
+        return;
+    }
+
+    function void unprintLost() {
+        do Output.moveCursor(15,0);
+        do Output.printString("              ");
+        do Output.moveCursor(16,0);
+        do Output.printString("            ");
+        do Output.println();
+        do Output.printString("           ");
         return;
     }
 }

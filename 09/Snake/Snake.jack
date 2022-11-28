@@ -100,6 +100,19 @@ class Snake {
         return head.getY();
     }
 
+    method void clear() {
+        var int i;
+        var SnakeBlock sb;
+        let i = 0;
+        while (i < curLength) {
+            let sb = blocks[i];
+            do sb.clear();
+            let i = i + 1;
+        }
+
+        return;
+    }
+
     method void incrementLength() {
         var SnakeBlock sb;
         var int newX, newY, newDir;
