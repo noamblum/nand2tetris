@@ -1,7 +1,7 @@
 class SnakeGame {
 
     field Snake s;
-    field int appleX, appleY;
+    field int appleX, appleY, score;
 
     static int UP, DOWN, LEFT, RIGHT;
 
@@ -26,6 +26,8 @@ class SnakeGame {
         do SnakeGame.printInstructions();
         do plantApple();
         do drawApple();
+        let score = 0;
+        do SnakeGame.updateScore(score);
       
         while (~exit) {
             let key = Keyboard.keyPressed();
@@ -62,6 +64,8 @@ class SnakeGame {
                         let s = Snake.new(4,4,3);
                         do plantApple();
                         do SnakeGame.unprintLost();
+                        let score = 0;
+                        do SnakeGame.updateScore(score);        
                     }     // r key
                 }
             }
@@ -69,6 +73,8 @@ class SnakeGame {
             if ((headX = appleX) & (headY = appleY)) {
                 do s.incrementLength();
                 do plantApple();
+                let score = score + 10;
+                do SnakeGame.updateScore(score);
             }
 
             do Sys.wait(200);
@@ -133,6 +139,16 @@ class SnakeGame {
         do Output.println();
         do Output.println();
         do Output.printString("  Good luck!");
+        do Output.moveCursor(22,0);
+        do Output.printString(" Score:");
+        return;
+    }
+
+    function void updateScore(int newScore) {
+        do Output.moveCursor(22,8);
+        do Output.printString("     ");
+        do Output.moveCursor(22,8);
+        do Output.printInt(newScore);
         return;
     }
 
