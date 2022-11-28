@@ -57,7 +57,17 @@ class Snake {
     /** Turns the snake's head in the specified direction */
     method void turn (int newDir) {
         var SnakeBlock head;
+        var int headDir;
         let head = blocks[0];
+        let headDir = head.getDirection();
+
+        if (
+            ((headDir = UP) & (newDir = DOWN)) |
+            ((headDir = DOWN) & (newDir = UP)) |
+            ((headDir = LEFT) & (newDir = RIGHT)) |
+            ((headDir = RIGHT) & (newDir = LEFT)))
+            { return; }
+
         do head.setDirection(newDir);
         return;
     }
