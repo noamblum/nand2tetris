@@ -36,17 +36,13 @@ class Snake {
         while (i < curLength) {
             let sb = blocks[i];
 
-            if (i = (curLength - 1)) {
-                do sb.clear();
-            }
+            do sb.clear();
 
             do sb.move();
             
             let curDir = sb.getDirection();
-            if (i = 0) {
-                do sb.draw();
-            }
-            else {
+            do sb.draw();
+            if (~(i=0)) {
                 do sb.setDirection(prevDir);
             }
 
@@ -80,6 +76,18 @@ class Snake {
             let i = i + 1;
         }
         return false;
+    }
+
+    method int getHeadX() {
+        var SnakeBlock head;
+        let head = blocks[0];
+        return head.getX();
+    }
+
+    method int getHeadY() {
+        var SnakeBlock head;
+        let head = blocks[0];
+        return head.getY();
     }
 
     method void incrementLength() {

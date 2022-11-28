@@ -1,11 +1,12 @@
 class SnakeGame {
 
     field Snake s;
+    field int appleX, appleY;
 
     static int UP, DOWN, LEFT, RIGHT;
 
     constructor SnakeGame new(){
-        let s = Snake.new(7,7,7);
+        let s = Snake.new(4,4,3);
         return this;
     }
 
@@ -16,12 +17,14 @@ class SnakeGame {
 
     method void run() {
 
-        var int direction;
+        var int direction, headX, headY;
         var char key;  // the key currently pressed by the user
         var boolean exit;
         let exit = false;
 
         do SnakeGame.printInstructions();
+        do plantApple();
+        do drawApple();
       
         while (~exit) {
             let key = Keyboard.keyPressed();
@@ -32,16 +35,43 @@ class SnakeGame {
             if (key = 130) { let direction = LEFT; }   // left arrow
             if (key = 132) { let direction = RIGHT; }   // right arrow
             if (~(direction = -1)) { do s.turn(direction); }
+            
+            do drawApple();
             do s.move();
+            let headX = s.getHeadX();
+            let headY = s.getHeadY();
+
             if (s.isEatingSelf()){
                 do SnakeGame.printLost();
                 let exit = true;
             }
+
+            if ((headX = appleX) & (headY = appleY)) {
+                do s.incrementLength();
+                do plantApple();
+            }
+
             do Sys.wait(200);
         } // while
         return;
     }
 
+
+    /** Plants an apple in a random position on the board */
+    method void plantApple() {
+        let appleX = Random.randRange(SnakeBoard.getWidth() - 1);
+        let appleY = Random.randRange(SnakeBoard.getHeight() - 1);
+        return;
+    }
+
+    method void drawApple() {
+        var int left, top;
+        do Screen.setColor(true);
+		let left = SnakeBoard.getLeft() + ((appleX * 16) + 3);
+		let top = SnakeBoard.getTop() + ((appleY * 16) + 3);
+        do Screen.drawRectangle(left, top, left + 10, top + 10);
+        return;
+    }
 
 
     function void init () {
