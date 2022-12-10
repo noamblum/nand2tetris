@@ -95,12 +95,13 @@ class JackTokenizer:
 
     KEYWORD_REGEX = r"class|constructor|function|method|field|static|var|int|char|boolean|void|true|false|null|this|let|do|if|else|while|return"
     SYMBOL_REGEX = r"[{}()\[\].,;+-/\*\&\|<>=~^#]"
-    INTEGER_CONSTANT_REGEX = r"\d"
-    STRING_CONSTANT_REGEX = r"\".*\""
+    INTEGER_CONSTANT_REGEX = r"\d+"
+    STRING_CONSTANT_REGEX = r"(?<=\").*?(?=\")"
     IDENTIFIER_REGEX = r"[a-zA-Z_][\w\d_]*"
-    SYMBOL_SET = {'[',']','{','}','(',')','.',',',';','+','-','/','*','&','|','<','>','=','~','^','#'}
-
-    NON_SPACE_WHITESPACE_REGEX = r"[^\S ]+"
+    
+    TOKEN_REGEX = f"({KEYWORD_REGEX})(?!\w)|({SYMBOL_REGEX})|({INTEGER_CONSTANT_REGEX})|({STRING_CONSTANT_REGEX})|({IDENTIFIER_REGEX})"
+    GROUP_TO_TYPE_DICT = {1: "KEYWORD", 2: "SYMBOL", 3: "INT_CONST", 4: 'STRING_CONST', 5: 'IDENTIFIER'}
+    
     COMMENT_REGEX = r"(/\*.*?\*/|//[^\r\n]*$)|(\".*?\")" # First capturing group is for comments, second for string literals
                                                          # This way, we can efficiently separate real comments from
                                                          # Comment indicators inside string literals
@@ -112,19 +113,17 @@ class JackTokenizer:
         Args:
             input_stream (typing.TextIO): input stream.
         """
-        self.__input = self.__standardize_input(input_stream)
-        self.__token_scan_start = 0
+        def token_type_finder(t):
+            for i, s in enumerate(t):
+                if s:
+                    return s, JackTokenizer.GROUP_TO_TYPE_DICT[i + 1]
+            return 0, ''
+        uncommented_input = self.__uncomment_input(input_stream)
+        tokenizer = re.compile(JackTokenizer.TOKEN_REGEX, re.MULTILINE)
+        self.__tokens: typing.List[typing.Tuple[str, str]] = [token_type_finder(tok) for tok in tokenizer.findall(uncommented_input)]
+        self.__active_token_ind = 0
 
-        self.__keyword_matcher = re.compile(JackTokenizer.KEYWORD_REGEX)
-        self.__symbol_matcher = re.compile(JackTokenizer.SYMBOL_REGEX)
-        self.__int_const_matcher = re.compile(JackTokenizer.INTEGER_CONSTANT_REGEX)
-        self.__str_const_matcher = re.compile(JackTokenizer.STRING_CONSTANT_REGEX)
-        self.__identifier_matcher = re.compile(JackTokenizer.IDENTIFIER_REGEX)
-
-        self.__active_token = ''
-        self.__next_token = self.__find_next_token()
-
-    def __standardize_input(self, input_stream: typing.TextIO):
+    def __uncomment_input(self, input_stream: typing.TextIO):
         """Returns the input stream, read as a string without comments and with all whitepspaces turned to a single space
 
         Args:
@@ -136,7 +135,6 @@ class JackTokenizer:
         input_stirng = input_stream.read()
 
         comment_remover = re.compile(JackTokenizer.COMMENT_REGEX, re.DOTALL | re.MULTILINE)
-        whitespace_matcher = re.compile(JackTokenizer.NON_SPACE_WHITESPACE_REGEX, re.MULTILINE)
 
         def replacer(match):
             """
@@ -145,11 +143,9 @@ class JackTokenizer:
             if match.group(1) is not None: # If matched a comment
                 return ''
             else: # In this case, matched a string literal
-                return match.group(1) # Return that string
+                return match.group(2) # Return that string
 
-        input_stirng = comment_remover.sub(replacer, input_stirng)
-
-        return whitespace_matcher.sub('', input_stirng)
+        return comment_remover.sub(replacer, input_stirng)
 
 
     def has_more_tokens(self) -> bool:
@@ -159,56 +155,17 @@ class JackTokenizer:
             bool: True if there are more tokens, False otherwise.
         """
         # Your code goes here!
-        return self.__next_token != ''
+        return self.__active_token_ind < len(self.__tokens)
 
     def advance(self) -> None:
         """Gets the next token from the input and makes it the current token. 
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
-        self.__active_token = self.__next_token
-        self.__next_token = self.__find_next_token()
+        self.__active_token_ind += 1
 
-    def __find_next_token(self):
-        next_token = ''
-        chars_read = 0
-        in_string_literal = False
-        is_number = False
-        for i in range(self.__token_scan_start, len(self.__input)):
-            c = self.__input[i]
-            chars_read += 1
-            if next_token == '' and c == ' ':
-                continue
-            elif next_token == '' and c in JackTokenizer.SYMBOL_SET:
-                next_token += c
-                break
-            elif next_token == '' and c == '"':
-                in_string_literal = True
-                continue
-            elif in_string_literal and c == '"':
-                break
-            elif not in_string_literal and c == ' ':
-                break
-            elif not in_string_literal and c in JackTokenizer.SYMBOL_SET:
-                chars_read -= 1
-                break
-            elif next_token != '' and c == '"':
-                break
-            elif next_token == '' and c.isdigit():
-                is_number = True
-                next_token += c
-                continue
-            elif not c.isdigit() and is_number:
-                chars_read -= 1
-                break
-            else:
-                next_token += c
-        
-        self.__token_scan_start += chars_read
-        return next_token
-
-    def get_active_token(self):
-        return self.__active_token
+    def __get_active_token(self):
+        return self.__tokens[self.__active_token_ind]
 
     def token_type(self) -> str:
         """
@@ -216,8 +173,7 @@ class JackTokenizer:
             str: the type of the current token, can be
             "KEYWORD", "SYMBOL", "IDENTIFIER", "INT_CONST", "STRING_CONST"
         """
-        # Your code goes here!
-        pass
+        return self.__get_active_token()[1]
 
     def keyword(self) -> str:
         """
@@ -228,8 +184,7 @@ class JackTokenizer:
             "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO", 
             "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
         """
-        # Your code goes here!
-        pass
+        return self.__get_active_token()[0].upper()
 
     def symbol(self) -> str:
         """
@@ -240,8 +195,7 @@ class JackTokenizer:
             symbol: '{' | '}' | '(' | ')' | '[' | ']' | '.' | ',' | ';' | '+' | 
               '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
         """
-        # Your code goes here!
-        pass
+        return self.__get_active_token()[0]
 
     def identifier(self) -> str:
         """
@@ -253,8 +207,7 @@ class JackTokenizer:
                   starting with a digit. You can assume keywords cannot be
                   identifiers, so 'self' cannot be an identifier, etc'.
         """
-        # Your code goes here!
-        pass
+        return self.__get_active_token()[0]
 
     def int_val(self) -> int:
         """
@@ -264,8 +217,7 @@ class JackTokenizer:
             Recall that integerConstant was defined in the grammar like so:
             integerConstant: A decimal number in the range 0-32767.
         """
-        # Your code goes here!
-        pass
+        return self.__get_active_token()[0]
 
     def string_val(self) -> str:
         """
@@ -276,12 +228,5 @@ class JackTokenizer:
             StringConstant: '"' A sequence of Unicode characters not including 
                       double quote or newline '"'
         """
-        # Your code goes here!
-        pass
+        return self.__get_active_token()[0]
 
-if __name__ == "__main__":
-    with open("SimpleTest/SimpleTest.jack") as f:
-        jt = JackTokenizer(f)
-        while jt.has_more_tokens():
-            jt.advance()
-            print(jt.get_active_token())
