@@ -6,6 +6,7 @@ as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+import re
 
 
 class JackTokenizer:
@@ -92,16 +93,52 @@ class JackTokenizer:
     Note that ^, # correspond to shiftleft and shiftright, respectively.
     """
 
+    KEYWORD_REGEX = r"class|constructor|function|method|field|static|var|int|char|boolean|void|true|false|null|this|let|do|if|else|while|return"
+    SYMBOL_REGEX = r"[{}()\[\].,;+-/\*\&\|<>=~^#]"
+    INTEGER_CONSTANT_REGEX = r"\d"
+    STRING_CONSTANT_REGEX = r"\".*\""
+    IDENTIFIER_REGEX = r"[a-zA-Z_][\w\d_]*"
+    SYMBOL_SET = {'[',']','{','}','(',')','.',',',';','+','-','/','*','&','|','<','>','=','~','^','#'}
+
+    SINGLE_LINE_COMMENT_REGEX = r"//.*\n"
+    MULTILINE_COMMENT_REGEX = r"/\*.*\*/"
+
     def __init__(self, input_stream: typing.TextIO) -> None:
         """Opens the input stream and gets ready to tokenize it.
 
         Args:
             input_stream (typing.TextIO): input stream.
         """
-        # Your code goes here!
-        # A good place to start is to read all the lines of the input:
-        # input_lines = input_stream.read().splitlines()
-        pass
+        self.__input = self.__uncomment_input(input_stream)
+        self.__token_scan_start = 0
+
+        self.__keyword_matcher = re.compile(JackTokenizer.KEYWORD_REGEX)
+        self.__symbol_matcher = re.compile(JackTokenizer.SYMBOL_REGEX)
+        self.__int_const_matcher = re.compile(JackTokenizer.INTEGER_CONSTANT_REGEX)
+        self.__str_const_matcher = re.compile(JackTokenizer.STRING_CONSTANT_REGEX)
+        self.__identifier_matcher = re.compile(JackTokenizer.IDENTIFIER_REGEX)
+
+        self.__active_token = ''
+        self.__next_token = self.__find_next_token()
+
+    def __uncomment_input(self, input_stream):
+        """
+        Returns the next line of code which is not a comment/whitespace
+        """
+        input_stirng = input_stream.read()
+
+        # Remove single line comments
+        input_stirng = re.sub(JackTokenizer.SINGLE_LINE_COMMENT_REGEX, "", input_stirng)
+
+        # Replace all whitespace with a single space
+        input_stirng = input_stirng.replace('\n', ' ')
+        input_stirng = re.sub(r"/s+", " ", input_stirng)
+
+        # Remove multi-line comments
+        input_stirng = re.sub(JackTokenizer.MULTILINE_COMMENT_REGEX, "", input_stirng)
+
+        return input_stirng
+
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -110,15 +147,56 @@ class JackTokenizer:
             bool: True if there are more tokens, False otherwise.
         """
         # Your code goes here!
-        pass
+        return self.__next_token != ''
 
     def advance(self) -> None:
         """Gets the next token from the input and makes it the current token. 
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
-        # Your code goes here!
-        pass
+        self.__active_token = self.__next_token
+        self.__next_token = self.__find_next_token()
+
+    def __find_next_token(self):
+        next_token = ''
+        chars_read = 0
+        in_string_literal = False
+        is_number = False
+        for i in range(self.__token_scan_start, len(self.__input)):
+            c = self.__input[i]
+            chars_read += 1
+            if next_token == '' and c == ' ':
+                continue
+            elif next_token == '' and c in JackTokenizer.SYMBOL_SET:
+                next_token += c
+                break
+            elif next_token == '' and c == '"':
+                in_string_literal = True
+                continue
+            elif in_string_literal and c == '"':
+                break
+            elif not in_string_literal and c == ' ':
+                break
+            elif not in_string_literal and c in JackTokenizer.SYMBOL_SET:
+                chars_read -= 1
+                break
+            elif next_token != '' and c == '"':
+                break
+            elif next_token == '' and c.isdigit():
+                is_number = True
+                next_token += c
+                continue
+            elif not c.isdigit() and is_number:
+                chars_read -= 1
+                break
+            else:
+                next_token += c
+        
+        self.__token_scan_start += chars_read
+        return next_token
+
+    def get_active_token(self):
+        return self.__active_token
 
     def token_type(self) -> str:
         """
@@ -188,3 +266,10 @@ class JackTokenizer:
         """
         # Your code goes here!
         pass
+
+if __name__ == "__main__":
+    with open("SimpleTest/SimpleTest.jack") as f:
+        jt = JackTokenizer(f)
+        while jt.has_more_tokens():
+            jt.advance()
+            print(jt.get_active_token())
