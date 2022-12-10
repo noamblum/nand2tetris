@@ -100,8 +100,11 @@ class JackTokenizer:
     IDENTIFIER_REGEX = r"[a-zA-Z_][\w\d_]*"
     SYMBOL_SET = {'[',']','{','}','(',')','.',',',';','+','-','/','*','&','|','<','>','=','~','^','#'}
 
-    SINGLE_LINE_COMMENT_REGEX = r"//.*\n"
-    MULTILINE_COMMENT_REGEX = r"/\*.*\*/"
+    NON_SPACE_WHITESPACE_REGEX = r"[^\S ]+"
+    COMMENT_REGEX = r"(/\*.*?\*/|//[^\r\n]*$)|(\".*?\")" # First capturing group is for comments, second for string literals
+                                                         # This way, we can efficiently separate real comments from
+                                                         # Comment indicators inside string literals
+
 
     def __init__(self, input_stream: typing.TextIO) -> None:
         """Opens the input stream and gets ready to tokenize it.
@@ -109,7 +112,7 @@ class JackTokenizer:
         Args:
             input_stream (typing.TextIO): input stream.
         """
-        self.__input = self.__uncomment_input(input_stream)
+        self.__input = self.__standardize_input(input_stream)
         self.__token_scan_start = 0
 
         self.__keyword_matcher = re.compile(JackTokenizer.KEYWORD_REGEX)
@@ -121,23 +124,32 @@ class JackTokenizer:
         self.__active_token = ''
         self.__next_token = self.__find_next_token()
 
-    def __uncomment_input(self, input_stream):
-        """
-        Returns the next line of code which is not a comment/whitespace
+    def __standardize_input(self, input_stream: typing.TextIO):
+        """Returns the input stream, read as a string without comments and with all whitepspaces turned to a single space
+
+        Args:
+            input_stream (typing.TextIO): The input file to be converted
+
+        Returns:
+            str: The standardized string, as specified
         """
         input_stirng = input_stream.read()
 
-        # Remove single line comments
-        input_stirng = re.sub(JackTokenizer.SINGLE_LINE_COMMENT_REGEX, "", input_stirng)
+        comment_remover = re.compile(JackTokenizer.COMMENT_REGEX, re.DOTALL | re.MULTILINE)
+        whitespace_matcher = re.compile(JackTokenizer.NON_SPACE_WHITESPACE_REGEX, re.MULTILINE)
 
-        # Replace all whitespace with a single space
-        input_stirng = input_stirng.replace('\n', ' ')
-        input_stirng = re.sub(r"/s+", " ", input_stirng)
+        def replacer(match):
+            """
+            A helper function which replaces comments and does not touch whitespace
+            """
+            if match.group(1) is not None: # If matched a comment
+                return ''
+            else: # In this case, matched a string literal
+                return match.group(1) # Return that string
 
-        # Remove multi-line comments
-        input_stirng = re.sub(JackTokenizer.MULTILINE_COMMENT_REGEX, "", input_stirng)
+        input_stirng = comment_remover.sub(replacer, input_stirng)
 
-        return input_stirng
+        return whitespace_matcher.sub('', input_stirng)
 
 
     def has_more_tokens(self) -> bool:
