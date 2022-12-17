@@ -6,3 +6,4 @@
 .vscode
 09/**/*.vm
 09/**/*.asm
+.DS_Store
