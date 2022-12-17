@@ -24,6 +24,12 @@ class CompilationEngine:
         """
         self.__tokenizer = tokenizer
         self.__output_stream = output_stream
+
+    
+    def __append_current_token(self, parent):
+        elem = ET.SubElement(parent, self.__tokenizer.token_type())
+        elem.text = self.__tokenizer.token_value()
+        self.__tokenizer.advance()
         
 
     def compile_class(self) -> ET.ElementTree:
@@ -39,19 +45,13 @@ class CompilationEngine:
         class_var_dec = ET.Element("classVarDec")
 
         # static/field
-        keyword = ET.SubElement(class_var_dec, self.__tokenizer.token_type())
-        keyword.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(class_var_dec)
 
         # type
-        var_type = ET.SubElement(class_var_dec, self.__tokenizer.token_type())
-        var_type.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(class_var_dec)
 
         # varName
-        var_name = ET.SubElement(class_var_dec, self.__tokenizer.token_type())
-        var_name.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(class_var_dec)
 
         while self.__tokenizer.has_more_tokens():
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
@@ -60,19 +60,13 @@ class CompilationEngine:
                 break
 
             elif t_type == "symbol" and t_val == ",":
-                separator = ET.SubElement(class_var_dec, self.__tokenizer.token_type())
-                separator.text = self.__tokenizer.token_value()
-                self.__tokenizer.advance()
+                self.__append_current_token(class_var_dec)
 
-            var_name = ET.SubElement(class_var_dec, self.__tokenizer.token_type())
-            var_name.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            self.__append_current_token(class_var_dec)
 
         
         # ;
-        dec_end = ET.SubElement(class_var_dec, self.__tokenizer.token_type())
-        dec_end.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(class_var_dec)
 
         return class_var_dec
 
@@ -83,27 +77,23 @@ class CompilationEngine:
         you will understand why this is necessary in project 11.
         """
         subroutine_dec = ET.Element("subroutineDec")
-        subroutine_type = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        subroutine_type.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
 
-        ret_type = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        ret_type.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # constructor/method/function
+        self.__append_current_token(subroutine_dec)
 
-        subroutine_name = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        subroutine_name.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # type
+        self.__append_current_token(subroutine_dec)
 
-        open_par = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        open_par.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # name
+        self.__append_current_token(subroutine_dec)
+
+        # (
+        self.__append_current_token(subroutine_dec)
 
         subroutine_dec.append(self.compile_parameter_list())
 
-        close_par = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        close_par.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # )
+        self.__append_current_token(subroutine_dec)
 
         subroutine_dec.append(self.compile_subroutine_body())
 
@@ -113,9 +103,8 @@ class CompilationEngine:
     def compile_subroutine_body(self) -> ET.ElementTree:
         subroutine_dec = ET.Element("subroutineBody")
 
-        open_par = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        open_par.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # {
+        self.__append_current_token(subroutine_dec)
 
         while self.__tokenizer.has_more_tokens():
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
@@ -127,9 +116,8 @@ class CompilationEngine:
         
         subroutine_dec.append(self.compile_statements())
 
-        close_par = ET.SubElement(subroutine_dec, self.__tokenizer.token_type())
-        close_par.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # }
+        self.__append_current_token(subroutine_dec)
 
         return subroutine_dec
 
@@ -149,17 +137,11 @@ class CompilationEngine:
 
             # Expression list separator
             elif t_type == "symbol" and t_val == ",":
-                separator = ET.SubElement(parameter_list, t_type)
-                separator.text = t_val
-                self.__tokenizer.advance()
+                self.__append_current_token(parameter_list)
 
-            var_type = ET.SubElement(parameter_list, t_type)
-            var_type.text = t_val
-            self.__tokenizer.advance()
+            self.__append_current_token(parameter_list)
 
-            var_name = ET.SubElement(parameter_list, t_type)
-            var_name.text = t_val
-            self.__tokenizer.advance()
+            self.__append_current_token(parameter_list)
 
         return parameter_list
 
@@ -168,19 +150,15 @@ class CompilationEngine:
         var_dec = ET.Element("varDec")
 
         # var
-        keyword = ET.SubElement(var_dec, self.__tokenizer.token_type())
-        keyword.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(var_dec)
 
         # type
-        var_type = ET.SubElement(var_dec, self.__tokenizer.token_type())
-        var_type.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(var_dec)
+
 
         # varName
-        var_name = ET.SubElement(var_dec, self.__tokenizer.token_type())
-        var_name.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(var_dec)
+
 
         while self.__tokenizer.has_more_tokens():
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
@@ -189,19 +167,14 @@ class CompilationEngine:
                 break
 
             elif t_type == "symbol" and t_val == ",":
-                separator = ET.SubElement(var_dec, self.__tokenizer.token_type())
-                separator.text = self.__tokenizer.token_value()
-                self.__tokenizer.advance()
+                self.__append_current_token(var_dec)
 
-            var_name = ET.SubElement(var_dec, self.__tokenizer.token_type())
-            var_name.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            # varName
+            self.__append_current_token(var_dec)
 
         
         # ;
-        dec_end = ET.SubElement(var_dec, self.__tokenizer.token_type())
-        dec_end.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(var_dec)
 
         return var_dec
 
@@ -238,36 +211,29 @@ class CompilationEngine:
     def compile_do(self) -> ET.ElementTree:
         """Compiles a do statement."""
         do_statement = ET.Element("doStatement")
-        keyword = ET.SubElement(do_statement, self.__tokenizer.token_type())
-        keyword.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        
+        # do keyword
+        self.__append_current_token(do_statement)
 
-        identifier = ET.SubElement(do_statement, self.__tokenizer.token_type())
-        identifier.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # func/class name
+        self.__append_current_token(do_statement)
 
         if self.__tokenizer.token_value() == ".":
-            dot = ET.SubElement(do_statement, self.__tokenizer.token_type())
-            dot.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            self.__append_current_token(do_statement)
 
-            subroutine_name = ET.SubElement(do_statement, self.__tokenizer.token_type())
-            subroutine_name.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            # func name
+            self.__append_current_token(do_statement)
 
-        open_par = ET.SubElement(do_statement, self.__tokenizer.token_type())
-        open_par.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # (
+        self.__append_current_token(do_statement)
 
         do_statement.append(self.compile_expression_list())
 
-        close_par = ET.SubElement(do_statement, self.__tokenizer.token_type())
-        close_par.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # )
+        self.__append_current_token(do_statement)
 
-        end_statement = ET.SubElement(do_statement, self.__tokenizer.token_type())
-        end_statement.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # ;
+        self.__append_current_token(do_statement)
 
         return do_statement
         
@@ -275,35 +241,28 @@ class CompilationEngine:
     def compile_let(self) -> ET.ElementTree:
         """Compiles a let statement."""
         let_statement = ET.Element("letStatement")
-        keyword = ET.SubElement(let_statement, self.__tokenizer.token_type())
-        keyword.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
 
-        var_name = ET.SubElement(let_statement, self.__tokenizer.token_type())
-        var_name.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # let keyword
+        self.__append_current_token(let_statement)
+
+        # var name
+        self.__append_current_token(let_statement)
 
         if self.__tokenizer.token_value() == "[":
-            open_par = ET.SubElement(let_statement, self.__tokenizer.token_type())
-            open_par.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            self.__append_current_token(let_statement)
 
             let_statement.append(self.compile_expression())
 
-            close_par = ET.SubElement(let_statement, self.__tokenizer.token_type())
-            close_par.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            # ]
+            self.__append_current_token(let_statement)
 
-        eq = ET.SubElement(let_statement, self.__tokenizer.token_type())
-        eq.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        # =
+        self.__append_current_token(let_statement)
 
         let_statement.append(self.compile_expression())
 
         # ;
-        end_statement = ET.SubElement(let_statement, self.__tokenizer.token_type())
-        end_statement.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(let_statement)
 
         return let_statement
             
@@ -313,48 +272,39 @@ class CompilationEngine:
         while_statement = ET.Element("ifStatement")
 
         # while keyword
-        while_keyword = ET.SubElement(while_statement, self.__tokenizer.token_type())
-        while_keyword.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(while_statement)
 
         # (
-        expression_openning = ET.SubElement(while_statement, self.__tokenizer.token_type())
-        expression_openning.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(while_statement)
 
         while_statement.append(self.compile_expression())
 
         # )
-        expression_closing = ET.SubElement(while_statement, self.__tokenizer.token_type())
-        expression_closing.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(while_statement)
         
         # {
-        statements_openning = ET.SubElement(while_statement, self.__tokenizer.token_type())
-        statements_openning.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(while_statement)
 
         while_statement.append(self.compile_statements())
 
         # }
-        statements_closing = ET.SubElement(while_statement, self.__tokenizer.token_type())
-        statements_closing.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(while_statement)
+        
+        return while_statement
 
     def compile_return(self) -> ET.ElementTree:
         """Compiles a return statement."""
         return_statement = ET.Element("returnStatement")
-        keyword = ET.SubElement(return_statement, self.__tokenizer.token_type())
-        keyword.text = self.__tokenizer.token_value()
+        
+        # return keyword
+        self.__append_current_token(return_statement)
 
-        self.__tokenizer.advance()
         if self.__tokenizer.token_type() != "symbol" or self.__tokenizer.token_value() != ";":
             return_statement.append(self.compile_expression())
         
-        end_symbol = ET.SubElement(return_statement, self.__tokenizer.token_type())
-        end_symbol.text = self.__tokenizer.token_value()
+        # ;
+        self.__append_current_token(return_statement)
 
-        self.__tokenizer.advance()
         return return_statement
 
     def compile_if(self) -> ET.ElementTree:
@@ -362,52 +312,36 @@ class CompilationEngine:
         if_statement = ET.Element("ifStatement")
 
         # if keyword
-        if_keyword = ET.SubElement(if_statement, self.__tokenizer.token_type())
-        if_keyword.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(if_statement)
 
         # (
-        expression_openning = ET.SubElement(if_statement, self.__tokenizer.token_type())
-        expression_openning.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(if_statement)
 
         if_statement.append(self.compile_expression())
 
         # )
-        expression_closing = ET.SubElement(if_statement, self.__tokenizer.token_type())
-        expression_closing.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(if_statement)
         
         # {
-        statements_openning = ET.SubElement(if_statement, self.__tokenizer.token_type())
-        statements_openning.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(if_statement)
 
         if_statement.append(self.compile_statements())
 
         # }
-        statements_closing = ET.SubElement(if_statement, self.__tokenizer.token_type())
-        statements_closing.text = self.__tokenizer.token_value()
-        self.__tokenizer.advance()
+        self.__append_current_token(if_statement)
         
         # Optional else statement
         if self.__tokenizer.token_type() == "keyword" or self.__tokenizer.token_value() == "else":
             # else keyword
-            else_keyword = ET.SubElement(if_statement, self.__tokenizer.token_type())
-            else_keyword.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            self.__append_current_token(if_statement)
 
             # {
-            statements_openning = ET.SubElement(if_statement, self.__tokenizer.token_type())
-            statements_openning.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            self.__append_current_token(if_statement)
 
             if_statement.append(self.compile_statements())
 
             # }
-            statements_closing = ET.SubElement(if_statement, self.__tokenizer.token_type())
-            statements_closing.text = self.__tokenizer.token_value()
-            self.__tokenizer.advance()
+            self.__append_current_token(if_statement)
         
         return if_statement
         
@@ -445,9 +379,7 @@ class CompilationEngine:
 
             # Expression list separator
             elif t_type == "symbol" and t_val == ",":
-                separator = ET.SubElement(expression_list, t_type)
-                separator.text = t_val
-                self.__tokenizer.advance()
+                self.__append_current_token(expression_list)
 
             expression_list.append(self.compile_expression())
 
