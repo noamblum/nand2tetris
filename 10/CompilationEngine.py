@@ -331,7 +331,7 @@ class CompilationEngine:
         self.__append_current_token(if_statement)
         
         # Optional else statement
-        if self.__tokenizer.token_type() == "keyword" or self.__tokenizer.token_value() == "else":
+        if self.__tokenizer.token_type() == "keyword" and self.__tokenizer.token_value() == "else":
             # else keyword
             self.__append_current_token(if_statement)
 
