@@ -7,6 +7,9 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 import re
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+import sys
 
 
 class JackTokenizer:
@@ -100,7 +103,7 @@ class JackTokenizer:
     IDENTIFIER_REGEX = r"[a-zA-Z_][\w\d_]*"
     
     TOKEN_REGEX = f"({KEYWORD_REGEX})(?!\w)|({SYMBOL_REGEX})|({INTEGER_CONSTANT_REGEX})|({STRING_CONSTANT_REGEX})|({IDENTIFIER_REGEX})"
-    GROUP_TO_TYPE_DICT = {1: "KEYWORD", 2: "SYMBOL", 3: "INT_CONST", 4: 'STRING_CONST', 5: 'IDENTIFIER'}
+    GROUP_TO_TYPE_DICT = {1: "keyword", 2: "symbol", 3: "integerConstant", 4: 'stringConstant', 5: 'identifier'}
     
     COMMENT_REGEX = r"(/\*.*?\*/|//[^\r\n]*$)|(\".*?\")" # First capturing group is for comments, second for string literals
                                                          # This way, we can efficiently separate real comments from
@@ -122,6 +125,7 @@ class JackTokenizer:
         tokenizer = re.compile(JackTokenizer.TOKEN_REGEX, re.MULTILINE)
         self.__tokens: typing.List[typing.Tuple[str, str]] = [token_type_finder(tok) for tok in tokenizer.findall(uncommented_input)]
         self.__active_token_ind = 0
+        self.__input_file_name = input_stream.name
 
     def __uncomment_input(self, input_stream: typing.TextIO):
         """Returns the input stream, read as a string without comments and with all whitepspaces turned to a single space
@@ -164,6 +168,21 @@ class JackTokenizer:
         """
         self.__active_token_ind += 1
 
+    def tokenize_input(self, output_tokens_file=False) -> ET:
+        tokens = ET.Element('tokens')
+        while self.has_more_tokens():
+            se = ET.SubElement(tokens, self.token_type())
+            se.text = self.token_value()
+            self.advance()
+        if output_tokens_file:
+            tokens_string = minidom.parseString(ET.tostring(tokens)).toprettyxml(indent='\t')
+            with open(f"{self.__input_file_name.replace('.jack', '')}TTest.xml", "w") as f:
+                tokens_lines = tokens_string.split('\n')
+                f.writelines(l + '\n' for l in tokens_lines[1:])
+
+        return tokens
+
+
     def __get_active_token(self):
         return self.__tokens[self.__active_token_ind]
 
@@ -171,62 +190,20 @@ class JackTokenizer:
         """
         Returns:
             str: the type of the current token, can be
-            "KEYWORD", "SYMBOL", "IDENTIFIER", "INT_CONST", "STRING_CONST"
+            "keyword", "symbol", "identifier", "integerConstant", "stringConstant"
         """
         return self.__get_active_token()[1]
 
-    def keyword(self) -> str:
+    def token_value(self) -> str:
         """
         Returns:
-            str: the keyword which is the current token.
-            Should be called only when token_type() is "KEYWORD".
-            Can return "CLASS", "METHOD", "FUNCTION", "CONSTRUCTOR", "INT", 
-            "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO", 
-            "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
-        """
-        return self.__get_active_token()[0].upper()
-
-    def symbol(self) -> str:
-        """
-        Returns:
-            str: the character which is the current token.
-            Should be called only when token_type() is "SYMBOL".
-            Recall that symbol was defined in the grammar like so:
-            symbol: '{' | '}' | '(' | ')' | '[' | ']' | '.' | ',' | ';' | '+' | 
-              '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
+            str: the value of the current token.
         """
         return self.__get_active_token()[0]
 
-    def identifier(self) -> str:
-        """
-        Returns:
-            str: the identifier which is the current token.
-            Should be called only when token_type() is "IDENTIFIER".
-            Recall that identifiers were defined in the grammar like so:
-            identifier: A sequence of letters, digits, and underscore ('_') not 
-                  starting with a digit. You can assume keywords cannot be
-                  identifiers, so 'self' cannot be an identifier, etc'.
-        """
-        return self.__get_active_token()[0]
 
-    def int_val(self) -> int:
-        """
-        Returns:
-            str: the integer value of the current token.
-            Should be called only when token_type() is "INT_CONST".
-            Recall that integerConstant was defined in the grammar like so:
-            integerConstant: A decimal number in the range 0-32767.
-        """
-        return self.__get_active_token()[0]
-
-    def string_val(self) -> str:
-        """
-        Returns:
-            str: the string value of the current token, without the double 
-            quotes. Should be called only when token_type() is "STRING_CONST".
-            Recall that StringConstant was defined in the grammar like so:
-            StringConstant: '"' A sequence of Unicode characters not including 
-                      double quote or newline '"'
-        """
-        return self.__get_active_token()[0]
-
+if __name__ == "__main__":
+    file_to_tokenize = sys.argv[1]
+    with open(file_to_tokenize) as f:
+        jt = JackTokenizer(f)
+        jt.tokenize_input(True)
