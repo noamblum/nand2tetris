@@ -8,7 +8,7 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 import typing
 import xml.etree.ElementTree as ET
 from JackTokenizer import JackTokenizer
-
+from xml.dom import minidom
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
@@ -28,7 +28,7 @@ class CompilationEngine:
     
     def __append_current_token(self, parent):
         elem = ET.SubElement(parent, self.__tokenizer.token_type())
-        elem.text = self.__tokenizer.token_value()
+        elem.text = f" {self.__tokenizer.token_value()} "
         self.__tokenizer.advance()
         
 
@@ -36,9 +36,53 @@ class CompilationEngine:
         """Compiles a complete class."""
         class_xml = ET.Element("class")
 
-        # Rest of code here
+        # class
+        self.__append_current_token(class_xml)
+
+        # className
+        self.__append_current_token(class_xml)
+
+        # {
+        self.__append_current_token(class_xml)
+
+        while self.__tokenizer.has_more_tokens():
+            t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
+
+            if t_type != 'keyword' or t_val not in {'static', 'field'}:
+                break
+            class_xml.append(self.compile_class_var_dec())
+
+        while self.__tokenizer.has_more_tokens():
+            t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
+
+            if t_type != 'keyword' or t_val not in {'constructor', 'function', 'method'}:
+                break
+            class_xml.append(self.compile_subroutine())
+
+
+        # }
+        self.__append_current_token(class_xml)
 
         # print the xml
+        def patcher(method):
+            def patching(self, *args, **kwargs):
+                old = self.childNodes
+                try:
+                    if not self.childNodes:
+                        class Dummy(list):
+                            def __bool__(self):  # Python3
+                                return True
+                        old, self.childNodes = self.childNodes, Dummy([])
+                    return method(self, *args, **kwargs)
+                finally:
+                    self.childNodes = old
+            return patching
+
+        class_parser = minidom.parseString(ET.tostring(class_xml))
+        class_parser.firstChild.__class__.writexml = patcher(class_parser.firstChild.__class__.writexml)
+        class_string = class_parser.toprettyxml(indent='  ')
+        class_lines = class_string.split('\n')
+        self.__output_stream.write('\n'.join(class_lines[1:]))
 
     def compile_class_var_dec(self) -> ET.ElementTree:
         """Compiles a static declaration or a field declaration."""
@@ -269,7 +313,7 @@ class CompilationEngine:
 
     def compile_while(self) -> ET.ElementTree:
         """Compiles a while statement."""
-        while_statement = ET.Element("ifStatement")
+        while_statement = ET.Element("whileStatement")
 
         # while keyword
         self.__append_current_token(while_statement)
@@ -349,8 +393,21 @@ class CompilationEngine:
 
     def compile_expression(self) -> ET.ElementTree:
         """Compiles an expression."""
-        # Your code goes here!
-        pass
+        expression = ET.Element("expression")
+        expression.append(self.compile_term())
+        while self.__tokenizer.has_more_tokens():
+            t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
+            
+            # Expression list end
+            if t_type == "symbol" and t_val in {'+', '-', '*', '/', '&', '|', '<', '>', '='}:
+                self.__append_current_token(expression)
+                expression.append(self.compile_term())
+            
+            else:
+                break
+        
+        return expression
+
 
     def compile_term(self) -> ET.ElementTree:
         """Compiles a term. 
@@ -362,8 +419,54 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        # Your code goes here!
-        pass
+        term = ET.Element("term")
+        t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
+
+        if t_type in {'integerConstant', 'stringConstant'} or \
+            (t_type == 'keyword' and t_val in {'true', 'false', 'null', 'this'}):
+            self.__append_current_token(term)
+
+        elif t_type == 'symbol' and t_val in {'-', '~'}:
+            self.__append_current_token(term)
+            term.append(self.compile_term())
+        
+        elif t_type == 'symbol' and t_val == '(':
+            # (
+            self.__append_current_token(term)
+            term.append(self.compile_expression())
+            # )
+            self.__append_current_token(term)
+        
+        else:
+            # varName/ start of subroutine call
+            self.__append_current_token(term)
+
+            t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
+
+            if t_type == 'symbol' and t_val == '[':
+                self.__append_current_token(term)
+                term.append(self.compile_expression())
+                self.__append_current_token(term)
+            
+            elif t_type == 'symbol' and t_val == '(':
+                self.__append_current_token(term)
+                term.append(self.compile_expression_list())
+                self.__append_current_token(term)
+
+            elif t_type == 'symbol' and t_val == '.':
+                # .
+                self.__append_current_token(term)
+
+                # subroutineName
+                self.__append_current_token(term)
+                # (
+                self.__append_current_token(term)
+                term.append(self.compile_expression_list())
+                # )
+                self.__append_current_token(term)
+
+        return term
+        
 
     def compile_expression_list(self) -> ET.ElementTree:
         """Compiles a (possibly empty) comma-separated list of expressions."""
