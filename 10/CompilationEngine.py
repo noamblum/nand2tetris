@@ -426,7 +426,7 @@ class CompilationEngine:
             (t_type == 'keyword' and t_val in {'true', 'false', 'null', 'this'}):
             self.__append_current_token(term)
 
-        elif t_type == 'symbol' and t_val in {'-', '~'}:
+        elif t_type == 'symbol' and t_val in {'-', '~', '^', '#'}:
             self.__append_current_token(term)
             term.append(self.compile_term())
         
