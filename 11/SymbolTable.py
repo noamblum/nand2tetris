@@ -16,15 +16,17 @@ class SymbolTable:
 
     def __init__(self) -> None:
         """Creates a new empty symbol table."""
-        # Your code goes here!
-        pass
+        self.__static_table = {}
+        self.__field_table = {}
+        self.__var_table = {}
+        self.__arg_table = {}
 
     def start_subroutine(self) -> None:
         """Starts a new subroutine scope (i.e., resets the subroutine's 
         symbol table).
         """
-        # Your code goes here!
-        pass
+        self.__var_table = {}
+        self.__arg_table = {}
 
     def define(self, name: str, type: str, kind: str) -> None:
         """Defines a new identifier of a given name, type and kind and assigns 
@@ -37,8 +39,16 @@ class SymbolTable:
             kind (str): the kind of the new identifier, can be:
             "STATIC", "FIELD", "ARG", "VAR".
         """
-        # Your code goes here!
-        pass
+        if kind == "STATIC":
+            self.__static_table[name] = (type, len(self.__static_table))
+        elif kind == "FIELD":
+            self.__field_table[name] = (type, len(self.__field_table))
+        elif kind == "ARG":
+            self.__arg_table[name] = (type, len(self.__arg_table))
+        elif kind == "VAR":
+            self.__var_table[name] = (type, len(self.__var_table))
+
+        
 
     def var_count(self, kind: str) -> int:
         """
@@ -49,8 +59,14 @@ class SymbolTable:
             int: the number of variables of the given kind already defined in 
             the current scope.
         """
-        # Your code goes here!
-        pass
+        if kind == "STATIC":
+            return len(self.__static_table)
+        elif kind == "FIELD":
+            return len(self.__field_table)
+        elif kind == "ARG":
+            return len(self.__arg_table)
+        elif kind == "VAR":
+            return len(self.__var_table)
 
     def kind_of(self, name: str) -> str:
         """
@@ -61,9 +77,15 @@ class SymbolTable:
             str: the kind of the named identifier in the current scope, or None
             if the identifier is unknown in the current scope.
         """
-        # Your code goes here!
-        pass
-
+        if name in self.__var_table:
+            return "VAR"
+        if name in self.__arg_table:
+            return "ARG"
+        if name in self.__field_table:
+            return "FIELD"
+        if name in self.__static_table:
+            return "STATIC"
+        
     def type_of(self, name: str) -> str:
         """
         Args:
@@ -72,8 +94,17 @@ class SymbolTable:
         Returns:
             str: the type of the named identifier in the current scope.
         """
-        # Your code goes here!
-        pass
+        if name in self.__var_table:
+            return self.__var_table[name][0]
+
+        if name in self.__arg_table:
+            return self.__arg_table[name][0]
+
+        if name in self.__field_table:
+            return self.__field_table[name][0]
+
+        if name in self.__static_table:
+            return self.__static_table[name][0]
 
     def index_of(self, name: str) -> int:
         """
@@ -83,5 +114,14 @@ class SymbolTable:
         Returns:
             int: the index assigned to the named identifier.
         """
-        # Your code goes here!
-        pass
+        if name in self.__var_table:
+            return self.__var_table[name][1]
+            
+        if name in self.__arg_table:
+            return self.__arg_table[name][1]
+
+        if name in self.__field_table:
+            return self.__field_table[name][1]
+
+        if name in self.__static_table:
+            return self.__static_table[name][1]
