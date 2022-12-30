@@ -10,6 +10,7 @@ from JackTokenizer import JackTokenizer
 from SymbolTable import SymbolTable
 from VMWriter import VMWriter
 
+SEGMENT = {"arg": "argument", "static": "static", "field": "this", "var": "local"}
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
@@ -126,7 +127,11 @@ class CompilationEngine:
             else:
                 break
         
-        self.__writer.write_function(subroutine_name, self.__symbol_table.var_count("var"))
+        self.__writer.write_function(f"{self.__class_name}.{subroutine_name}", self.__symbol_table.var_count("var"))
+
+        if subroutine_type == "constructor":
+            self.__writer.write_push("constant", self.__symbol_table.var_count("field"))
+            self.__writer.write_call("Memory.alloc", 1)
         
         self.compile_statements()
 
@@ -222,32 +227,57 @@ class CompilationEngine:
 
     def compile_do(self) -> None:
         """Compiles a do statement."""
-        do_statement = ET.Element("doStatement")
-        
         # do keyword
-        self.__append_current_token(do_statement)
+        self.__tokenizer.advance()
 
         # func/class name
-        self.__append_current_token(do_statement)
+        var_or_class_name = None
+        func_name = self.__tokenizer.token_value()
+        self.__tokenizer.advance()
 
         if self.__tokenizer.token_value() == ".":
-            self.__append_current_token(do_statement)
+            var_or_class_name = func_name
+            
+            # .
+            self.__tokenizer.advance()
 
             # func name
-            self.__append_current_token(do_statement)
+            func_name = self.__tokenizer.token_value()
+            self.__tokenizer.advance()
 
         # (
-        self.__append_current_token(do_statement)
+        self.__tokenizer.advance()
 
-        do_statement.append(self.compile_expression_list())
+        n_args = 0
+        is_call_to_other_class = False
+        if var_or_class_name is None:
+            # this is a method of the curent object, push this
+            func_name = f"{self.__class_name}.{func_name}"
+            self.__writer.write_push("pointer", 0)
+            n_args += 1
+        
+        elif self.__symbol_table.kind_of(var_or_class_name) == "var":
+            kind = self.__symbol_table.kind_of(var_or_class_name)
+            if kind != None:
+                # This is a method of an object
+                func_name = f"{self.__symbol_table.type_of(var_or_class_name)}.{func_name}"
+                self.__writer.write_push(SEGMENT[kind], self.__symbol_table.index_of(var_or_class_name))
+            else:
+                # Otherwise this is a static function of a class, no need to push a first argument
+                func_name = f"{var_or_class_name}.{func_name}"
+        
+        n_args += self.compile_expression_list()
+
+        self.__writer.write_call(func_name, n_args)
+
+        # Do statements are void functions or we ignore their return value, so need to pop that placeholder returned value
+        self.__writer.write_pop("temp", 0)
 
         # )
-        self.__append_current_token(do_statement)
+        self.__tokenizer.advance()
 
         # ;
-        self.__append_current_token(do_statement)
-
-        return do_statement
+        self.__tokenizer.advance()
         
 
     def compile_let(self) -> None:
@@ -436,11 +466,10 @@ class CompilationEngine:
         return term
         
 
-    def compile_expression_list(self) -> None:
-        """Compiles a (possibly empty) comma-separated list of expressions."""
+    def compile_expression_list(self) -> int:
+        """Compiles a (possibly empty) comma-separated list of expressions. Returns that amount of expressions in the list"""
 
-        expression_list = ET.Element("expressionList")
-
+        n_expressions = 0
         while self.__tokenizer.has_more_tokens():
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
             
@@ -450,8 +479,9 @@ class CompilationEngine:
 
             # Expression list separator
             elif t_type == "symbol" and t_val == ",":
-                self.__append_current_token(expression_list)
+                self.__tokenizer.advance()
 
-            expression_list.append(self.compile_expression())
+            self.compile_expression()
+            n_expressions += 1
 
-        return expression_list
+        return n_expressions

@@ -85,6 +85,7 @@ class SymbolTable:
             return "field"
         if name in self.__static_table:
             return "static"
+        return None
         
     def type_of(self, name: str) -> str:
         """
@@ -105,6 +106,7 @@ class SymbolTable:
 
         if name in self.__static_table:
             return self.__static_table[name][0]
+        return None
 
     def index_of(self, name: str) -> int:
         """
@@ -125,3 +127,5 @@ class SymbolTable:
 
         if name in self.__static_table:
             return self.__static_table[name][1]
+        
+        return None
