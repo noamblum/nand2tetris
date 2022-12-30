@@ -28,6 +28,8 @@ class CompilationEngine:
         self.__writer = VMWriter(output_stream)
         self.__symbol_table = SymbolTable()
         self.__class_name = ""
+        self.__subroutine_name = ""
+        self.__while_ind = 0
         
     def compile_class(self) -> None:
         """Compiles a complete class."""
@@ -102,6 +104,8 @@ class CompilationEngine:
 
         # name
         subroutine_name = self.__tokenizer.token_value()
+        self.__subroutine_name = subroutine_name
+        self.__while_ind = 0
         self.__tokenizer.advance()
 
         # (
@@ -330,28 +334,38 @@ class CompilationEngine:
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        while_statement = ET.Element("whileStatement")
 
         # while keyword
-        self.__append_current_token(while_statement)
+        self.__tokenizer.advance()
 
         # (
-        self.__append_current_token(while_statement)
+        self.__tokenizer.advance()
 
-        while_statement.append(self.compile_expression())
+        loop_start_label = f"{self.__class_name}.{self.__subroutine_name}$WhileStart{self.__while_ind}"
+        loop_end_label = f"{self.__class_name}.{self.__subroutine_name}$WhileEnd{self.__while_ind}"
+        self.__while_ind += 1
+
+        self.__writer.write_label(loop_start_label)
+
+        self.compile_expression()
+
+        self.__writer.write_arithmetic("neg")
+
+        self.__writer.write_if(loop_end_label)
 
         # )
-        self.__append_current_token(while_statement)
+        self.__tokenizer.advance()
         
         # {
-        self.__append_current_token(while_statement)
+        self.__tokenizer.advance()
 
-        while_statement.append(self.compile_statements())
+        self.compile_statements()
 
         # }
-        self.__append_current_token(while_statement)
-        
-        return while_statement
+        self.__tokenizer.advance()
+
+        self.__writer.write_goto(loop_start_label)
+        self.__writer.write_label(loop_end_label)
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
