@@ -39,13 +39,13 @@ class SymbolTable:
             kind (str): the kind of the new identifier, can be:
             "STATIC", "FIELD", "ARG", "VAR".
         """
-        if kind == "STATIC":
+        if kind == "static":
             self.__static_table[name] = (type, len(self.__static_table))
-        elif kind == "FIELD":
+        elif kind == "field":
             self.__field_table[name] = (type, len(self.__field_table))
-        elif kind == "ARG":
+        elif kind == "arg":
             self.__arg_table[name] = (type, len(self.__arg_table))
-        elif kind == "VAR":
+        elif kind == "var":
             self.__var_table[name] = (type, len(self.__var_table))
 
         
@@ -59,13 +59,13 @@ class SymbolTable:
             int: the number of variables of the given kind already defined in 
             the current scope.
         """
-        if kind == "STATIC":
+        if kind == "static":
             return len(self.__static_table)
-        elif kind == "FIELD":
+        elif kind == "field":
             return len(self.__field_table)
-        elif kind == "ARG":
+        elif kind == "arg":
             return len(self.__arg_table)
-        elif kind == "VAR":
+        elif kind == "var":
             return len(self.__var_table)
 
     def kind_of(self, name: str) -> str:
@@ -78,13 +78,13 @@ class SymbolTable:
             if the identifier is unknown in the current scope.
         """
         if name in self.__var_table:
-            return "VAR"
+            return "var"
         if name in self.__arg_table:
-            return "ARG"
+            return "arg"
         if name in self.__field_table:
-            return "FIELD"
+            return "field"
         if name in self.__static_table:
-            return "STATIC"
+            return "static"
         
     def type_of(self, name: str) -> str:
         """
