@@ -230,6 +230,13 @@ class CompilationEngine:
         # do keyword
         self.__tokenizer.advance()
 
+        self.compile_subroutine_call()
+
+        # ;
+        self.__tokenizer.advance()
+
+    
+    def compile_subroutine_call(self):
         # func/class name
         var_or_class_name = None
         func_name = self.__tokenizer.token_value()
@@ -249,7 +256,6 @@ class CompilationEngine:
         self.__tokenizer.advance()
 
         n_args = 0
-        is_call_to_other_class = False
         if var_or_class_name is None:
             # this is a method of the curent object, push this
             func_name = f"{self.__class_name}.{func_name}"
@@ -275,38 +281,51 @@ class CompilationEngine:
 
         # )
         self.__tokenizer.advance()
-
-        # ;
-        self.__tokenizer.advance()
         
 
     def compile_let(self) -> None:
         """Compiles a let statement."""
-        let_statement = ET.Element("letStatement")
-
         # let keyword
-        self.__append_current_token(let_statement)
+        self.__tokenizer.advance()
 
         # var name
-        self.__append_current_token(let_statement)
+        var_name = self.__tokenizer.token_value()
+        self.__tokenizer.advance()
 
         if self.__tokenizer.token_value() == "[":
-            self.__append_current_token(let_statement)
+            # [
+            self.__tokenizer.advance()
 
-            let_statement.append(self.compile_expression())
+            
+            self.__writer.write_push(SEGMENT[self.__symbol_table.kind_of(var_name)], self.__symbol_table.index_of(var_name))
+
+            # Put the required index on top of the stack
+            self.compile_expression()
+
+            self.__writer.write_arithmetic("add")
 
             # ]
-            self.__append_current_token(let_statement)
+            self.__tokenizer.advance()
 
-        # =
-        self.__append_current_token(let_statement)
+            # =
+            self.__tokenizer.advance()
 
-        let_statement.append(self.compile_expression())
+            self.compile_expression()
 
+            self.__writer.write_pop("temp", 0)
+            self.__writer.write_pop("pointer", 1)
+            self.__writer.write_push("temp", 0)
+            self.__writer.write_pop("that", 0)
+
+        else:
+            # =
+            self.__tokenizer.advance()
+
+            self.compile_expression()
+
+            self.__writer.write_pop(SEGMENT[self.__symbol_table.kind_of(var_name)], self.__symbol_table.index_of(var_name))
         # ;
-        self.__append_current_token(let_statement)
-
-        return let_statement
+        self.__tokenizer.advance()
             
 
     def compile_while(self) -> None:
