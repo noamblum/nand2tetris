@@ -102,8 +102,8 @@ class JackTokenizer:
     STRING_CONSTANT_REGEX = r"(?<=\").*?(?=\")"
     IDENTIFIER_REGEX = r"[a-zA-Z_][\w\d_]*"
     
-    TOKEN_REGEX = f"({KEYWORD_REGEX})(?!\w)|({SYMBOL_REGEX})|({INTEGER_CONSTANT_REGEX})|({STRING_CONSTANT_REGEX})|({IDENTIFIER_REGEX})"
-    GROUP_TO_TYPE_DICT = {1: "keyword", 2: "symbol", 3: "integerConstant", 4: 'stringConstant', 5: 'identifier'}
+    TOKEN_REGEX = f"({STRING_CONSTANT_REGEX})|({SYMBOL_REGEX})|({INTEGER_CONSTANT_REGEX})|({KEYWORD_REGEX})(?!\w)|({IDENTIFIER_REGEX})"
+    GROUP_TO_TYPE_DICT = {4: "keyword", 2: "symbol", 3: "integerConstant", 1: 'stringConstant', 5: 'identifier'}
     
     COMMENT_REGEX = r"(/\*.*?\*/|//[^\r\n]*$)|(\".*?\")" # First capturing group is for comments, second for string literals
                                                          # This way, we can efficiently separate real comments from
@@ -200,6 +200,16 @@ class JackTokenizer:
             str: the value of the current token.
         """
         return self.__get_active_token()[0]
+
+    def rewind(self, step: int):
+        """Rewind some tokens. Accepts only positive numbers
+
+        Args:
+            step (int): how many tokens to go back
+        """
+        if step < 0:
+            return
+        self.__active_token_ind = max(0, self.__active_token_ind - step)
 
 
 if __name__ == "__main__":

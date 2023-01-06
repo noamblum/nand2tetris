@@ -30,6 +30,7 @@ class CompilationEngine:
         self.__class_name = ""
         self.__subroutine_name = ""
         self.__while_ind = 0
+        self.__if_ind = 0
         
     def compile_class(self) -> None:
         """Compiles a complete class."""
@@ -106,6 +107,7 @@ class CompilationEngine:
         subroutine_name = self.__tokenizer.token_value()
         self.__subroutine_name = subroutine_name
         self.__while_ind = 0
+        self.__if_ind = 0
         self.__tokenizer.advance()
 
         # (
@@ -369,75 +371,104 @@ class CompilationEngine:
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
-        return_statement = ET.Element("returnStatement")
-        
         # return keyword
-        self.__append_current_token(return_statement)
+        self.__tokenizer.advance()
 
         if self.__tokenizer.token_type() != "symbol" or self.__tokenizer.token_value() != ";":
-            return_statement.append(self.compile_expression())
+            self.compile_expression()
+        else:
+            # Placeholder 0
+            self.__writer.write_push("constant", 0)
         
+        self.__writer.write_return()
         # ;
-        self.__append_current_token(return_statement)
+        self.__tokenizer.advance()
 
-        return return_statement
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
-        if_statement = ET.Element("ifStatement")
-
         # if keyword
-        self.__append_current_token(if_statement)
+        self.__tokenizer.advance()
 
         # (
-        self.__append_current_token(if_statement)
+        self.__tokenizer.advance()
 
-        if_statement.append(self.compile_expression())
+        self.compile_expression()
+        self.__writer.write_arithmetic("not")
 
         # )
-        self.__append_current_token(if_statement)
+        self.__tokenizer.advance()
         
         # {
-        self.__append_current_token(if_statement)
+        self.__tokenizer.advance()
 
-        if_statement.append(self.compile_statements())
+        else_label = f"{self.__class_name}.{self.__subroutine_name}$Else{self.__if_ind}"
+        if_end_label = f"{self.__class_name}.{self.__subroutine_name}$IfEnd{self.__if_ind}"
+        self.__if_ind += 1
+
+        self.__writer.write_if(else_label)
+
+        self.compile_statements()
+
+        self.__writer.write_goto(if_end_label)
 
         # }
-        self.__append_current_token(if_statement)
-        
+        self.__tokenizer.advance()
+
+        self.__writer.write_label(else_label)
         # Optional else statement
         if self.__tokenizer.token_type() == "keyword" and self.__tokenizer.token_value() == "else":
             # else keyword
-            self.__append_current_token(if_statement)
+            self.__tokenizer.advance()
 
             # {
-            self.__append_current_token(if_statement)
+            self.__tokenizer.advance()
 
-            if_statement.append(self.compile_statements())
+            self.compile_statements()
 
             # }
-            self.__append_current_token(if_statement)
+            self.__tokenizer.advance()
         
-        return if_statement
+        self.__writer.write_label(if_end_label)
         
         
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
-        expression = ET.Element("expression")
-        expression.append(self.compile_term())
+        self.compile_term()
         while self.__tokenizer.has_more_tokens():
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
             
             # Expression list end
             if t_type == "symbol" and t_val in {'+', '-', '*', '/', '&', '|', '<', '>', '='}:
-                self.__append_current_token(expression)
-                expression.append(self.compile_term())
+
+                operator = t_val
+
+                self.__tokenizer.advance()
+
+                self.compile_term()
+
+                if operator == '+':
+                    self.__writer.write_arithmetic("add")
+                elif operator == '-':
+                    self.__writer.write_arithmetic("sub")
+                elif operator == '*':
+                    self.__writer.write_call("Math.multiply", 2)
+                elif operator == '/':
+                    self.__writer.write_call("Math.divide", 2)
+                elif operator == '&':
+                    self.__writer.write_arithmetic("and")
+                elif operator == '|':
+                    self.__writer.write_arithmetic("or")
+                elif operator == '<':
+                    self.__writer.write_arithmetic("lt")
+                elif operator == '>':
+                    self.__writer.write_arithmetic("gt")
+                elif operator == '=':
+                    self.__writer.write_arithmetic("eq")
             
             else:
                 break
-        
-        return expression
 
 
     def compile_term(self) -> None:
@@ -450,53 +481,72 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        term = ET.Element("term")
         t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
 
         if t_type in {'integerConstant', 'stringConstant'} or \
             (t_type == 'keyword' and t_val in {'true', 'false', 'null', 'this'}):
-            self.__append_current_token(term)
+            if t_type == 'integerConstant':
+                self.__writer.write_push("constant", int(t_val))
+            if t_type == 'stringConstant':
+                self.__writer.write_push("constant", len(t_val))
+                self.__writer.write_call("String.new", 1)
+                for char in t_val:
+                    self.__writer.write_push("constant", ord(char))
+                    self.__writer.write_call("String.appendChar", 2)
+            elif t_val == "true":
+                self.__writer.write_push("constant", 1)
+                self.__writer.write_arithmetic("neg")
+            elif t_val in {"false", "null"}:
+                self.__writer.write_push("constant", 0)
+            elif t_val == "this":
+                self.__writer.write_push("pointer", 0)
+            self.__tokenizer.advance()
 
         elif t_type == 'symbol' and t_val in {'-', '~', '^', '#'}:
-            self.__append_current_token(term)
-            term.append(self.compile_term())
+            operator = t_val
+            self.__tokenizer.advance()
+            self.compile_term()
+            if operator == '-':
+                self.__writer.write_arithmetic('neg')
+            elif operator == '~':
+                self.__writer.write_arithmetic('not')
+            elif operator == '^':
+                self.__writer.write_arithmetic('shiftleft')
+            elif operator == '#':
+                self.__writer.write_arithmetic('shiftright')
         
         elif t_type == 'symbol' and t_val == '(':
             # (
-            self.__append_current_token(term)
-            term.append(self.compile_expression())
+            self.__tokenizer.advance()
+            self.compile_expression()
             # )
-            self.__append_current_token(term)
+            self.__tokenizer.advance()
         
         else:
             # varName/ start of subroutine call
-            self.__append_current_token(term)
+            var_name = self.__tokenizer.token_value()
+            self.__tokenizer.advance()
 
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
 
             if t_type == 'symbol' and t_val == '[':
-                self.__append_current_token(term)
-                term.append(self.compile_expression())
-                self.__append_current_token(term)
+                # [
+                self.__tokenizer.advance()
+                self.__writer.write_push(SEGMENT[self.__symbol_table.kind_of(var_name)],
+                                            self.__symbol_table.index_of(var_name))
+                self.compile_expression()
+                self.__writer.write_arithmetic("add")
+                self.__writer.write_pop("pointer", 1)
+                self.__writer.write_push("that", 0)
+                # ]
+                self.__tokenizer.advance()
             
-            elif t_type == 'symbol' and t_val == '(':
-                self.__append_current_token(term)
-                term.append(self.compile_expression_list())
-                self.__append_current_token(term)
-
-            elif t_type == 'symbol' and t_val == '.':
-                # .
-                self.__append_current_token(term)
-
-                # subroutineName
-                self.__append_current_token(term)
-                # (
-                self.__append_current_token(term)
-                term.append(self.compile_expression_list())
-                # )
-                self.__append_current_token(term)
-
-        return term
+            elif t_type == 'symbol' and t_val in {'(', '.'} :
+                self.__tokenizer.rewind(1)
+                self.compile_subroutisne_call()
+            else:
+                self.__writer.write_push(SEGMENT[self.__symbol_table.kind_of(var_name)],
+                                            self.__symbol_table.index_of(var_name))
         
 
     def compile_expression_list(self) -> int:
