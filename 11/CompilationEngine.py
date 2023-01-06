@@ -234,6 +234,9 @@ class CompilationEngine:
 
         self.compile_subroutine_call()
 
+        # Do statements are void functions or we ignore their return value, so need to pop that placeholder returned value
+        self.__writer.write_pop("temp", 0)
+
         # ;
         self.__tokenizer.advance()
 
@@ -264,22 +267,19 @@ class CompilationEngine:
             self.__writer.write_push("pointer", 0)
             n_args += 1
         
-        elif self.__symbol_table.kind_of(var_or_class_name) == "var":
+        elif self.__symbol_table.kind_of(var_or_class_name) is not None:
             kind = self.__symbol_table.kind_of(var_or_class_name)
-            if kind != None:
-                # This is a method of an object
-                func_name = f"{self.__symbol_table.type_of(var_or_class_name)}.{func_name}"
-                self.__writer.write_push(SEGMENT[kind], self.__symbol_table.index_of(var_or_class_name))
-            else:
-                # Otherwise this is a static function of a class, no need to push a first argument
-                func_name = f"{var_or_class_name}.{func_name}"
+            # This is a method of an object
+            func_name = f"{self.__symbol_table.type_of(var_or_class_name)}.{func_name}"
+            self.__writer.write_push(SEGMENT[kind], self.__symbol_table.index_of(var_or_class_name))
+            n_args += 1
+        else:
+            # Otherwise this is a static function of a class, no need to push a first argument
+            func_name = f"{var_or_class_name}.{func_name}"
         
         n_args += self.compile_expression_list()
 
         self.__writer.write_call(func_name, n_args)
-
-        # Do statements are void functions or we ignore their return value, so need to pop that placeholder returned value
-        self.__writer.write_pop("temp", 0)
 
         # )
         self.__tokenizer.advance()
@@ -539,7 +539,7 @@ class CompilationEngine:
             
             elif t_type == 'symbol' and t_val in {'(', '.'} :
                 self.__tokenizer.rewind(1)
-                self.compile_subroutisne_call()
+                self.compile_subroutine_call()
             else:
                 self.__writer.write_push(SEGMENT[self.__symbol_table.kind_of(var_name)],
                                             self.__symbol_table.index_of(var_name))
