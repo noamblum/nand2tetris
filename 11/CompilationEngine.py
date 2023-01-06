@@ -205,8 +205,6 @@ class CompilationEngine:
         """Compiles a sequence of statements, not including the enclosing 
         "{}".
         """
-        statements = ET.Element("statements")
-
         while self.__tokenizer.has_more_tokens():
             t_type, t_val = self.__tokenizer.token_type(), self.__tokenizer.token_value()
             
@@ -215,21 +213,19 @@ class CompilationEngine:
                 break
 
             elif t_type == "keyword" and t_val == "if":
-                statements.append(self.compile_if())
+                self.compile_if()
 
             elif t_type == "keyword" and t_val == "while":
-                statements.append(self.compile_while())
+                self.compile_while()
 
             elif t_type == "keyword" and t_val == "do":
-                statements.append(self.compile_do())
+                self.compile_do()
 
             elif t_type == "keyword" and t_val == "let":
-                statements.append(self.compile_let())
+                self.compile_let()
 
             elif t_type == "keyword" and t_val == "return":
-                statements.append(self.compile_return())
-
-        return statements
+                self.compile_return()
 
     def compile_do(self) -> None:
         """Compiles a do statement."""

@@ -89,7 +89,7 @@ class VMWriter:
             name (str): the name of the function.
             n_locals (int): the number of local variables the function uses.
         """
-        self.__out_stream.write(f"call {name} {n_locals}\n")
+        self.__out_stream.write(f"function {name} {n_locals}\n")
 
     def write_return(self) -> None:
         """Writes a VM return command."""
