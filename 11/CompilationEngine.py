@@ -138,6 +138,11 @@ class CompilationEngine:
         if subroutine_type == "constructor":
             self.__writer.write_push("constant", self.__symbol_table.var_count("field"))
             self.__writer.write_call("Memory.alloc", 1)
+            self.__writer.write_pop("pointer", 0)
+        
+        elif subroutine_type == "method":
+            self.__writer.write_push("argument", 0)
+            self.__writer.write_pop("pointer", 0)
         
         self.compile_statements()
 
@@ -347,7 +352,7 @@ class CompilationEngine:
 
         self.compile_expression()
 
-        self.__writer.write_arithmetic("neg")
+        self.__writer.write_arithmetic("not")
 
         self.__writer.write_if(loop_end_label)
 
