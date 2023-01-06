@@ -110,6 +110,9 @@ class CompilationEngine:
         self.__if_ind = 0
         self.__tokenizer.advance()
 
+        if subroutine_type == "method":
+            self.__symbol_table.define("this", self.__class_name ,"arg")
+
         # (
         self.__tokenizer.advance()
 
