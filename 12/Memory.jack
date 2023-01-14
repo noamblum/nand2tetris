@@ -11,20 +11,30 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
+    static Array ram;
+    static int freeList;
     /** Initializes the class. */
     function void init() {
         // Pseudocode:
         // 1. freeList = heapBase
         // 2. freeList.length = heapLength
         // 3. freeList.next = null
+        let ram = 0;
+        let freeList = 2048;
+        let ram[freeList] = 14336; // heapSize
+        let ram[freeList + 1] = 0;
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return ram[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
@@ -41,6 +51,42 @@ class Memory {
         // 5. Return block
         // The figure MemoryTest/MemoryFreeListExample.png illustrates how
         // the freeList should look like.
+        var int segmentBase, segmentSize, block, prev, newSegmentBase;
+        let segmentBase = freeList;
+        let segmentSize = ram[segmentBase];
+        let prev = -1;
+        while (~(segmentBase = 0)) {
+            if (segmentSize > size) {
+                let block = segmentBase + 1;
+                let newSegmentBase = segmentBase + size + 1;
+                if (prev = -1) { // First block matches
+                    if (newSegmentBase < (segmentBase + segmentSize - 1)) {
+                        // Has remaining segemnt
+                        let freeList = newSegmentBase;
+                    }
+                    else {
+                        // Took up whole segment, skip to next block
+                        let freeList = ram[segmentBase + 1];
+                    }
+                }
+                else {
+                    if (newSegmentBase < (segmentBase + segmentSize - 1)) {                
+                        let ram[prev + 1] = newSegmentBase;
+                    }
+                    else {
+                        let ram[prev + 1] = ram[segmentBase + 1];
+                    }
+                }
+                let ram[newSegmentBase] = segmentSize - size - 1;
+                let ram[newSegmentBase + 1] = ram[segmentBase + 1];
+                let ram[block - 1] = size + 1; // for dealloc
+                return block;
+            }
+            let prev = segmentBase;
+            let segmentBase = ram[segmentBase + 1];
+            let segmentSize = ram[segmentBase];
+        }
+        return -1;
     }
 
     /** De-allocates the given object (cast as an array) by making
@@ -49,6 +95,9 @@ class Memory {
         // Pseudocode:
         // 1. segment = o - 1
         // 2. Insert segment into the freeList
+        let ram[o] = freeList;
+        let freeList = o - 1;
+        return;
     }    
 
     /** Returns the maximal element contained in the given Array/object. 
@@ -57,5 +106,16 @@ class Memory {
         // Hint: the algorithm you need to implement in Memory.alloc saves the
         // size of the allocated block in the memory cell right before the 
         // start of the block, and this can be used to implement Memory.max.
+        var int size, maxVal, i;
+        let size = ram[o - 1] - 1;
+        let i = 0;
+        let maxVal = o[0];
+        while (i < size) {
+            if (o[i] > maxVal) {
+                let maxVal = o[i];
+            }
+            let i = i + 1;
+        }
+        return maxVal;
     }
 }
