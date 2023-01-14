@@ -9,12 +9,30 @@
  * Note: Jack compilers implement multiplication and division using OS method calls.
  */
 class Math {
+
+        static int qy2;
+        static Array twoToThe;
+
         /** Initializes the library. */
         function void init() {
+            var int i;
+            let i = 1;
+            let qy2 = 0;
+            let twoToThe = Array.new(16);
+            let twoToThe[0] = 1;
+            while (i < 16) {
+                let twoToThe[i] = ^twoToThe[i - 1];
+                let i = i + 1;
+            }
+            return;
         }
 
         /** Returns the absolute value of x. */
         function int abs(int x) {
+            if (x < 0) {
+                return -x;
+            }
+            return x;
         }
 
         /** 
@@ -24,14 +42,20 @@ class Math {
          * the Jack expressions x*y and multiply(x,y) return the same value.
          */
         function int multiply(int x, int y) {
-            // Pseudocode:
-            // 1. let sum = 0
-            // 2. let shiftedx = x
-            // 3. for i = 0 ... n-1 do
-            // 4.   if ((i-th bit of y) == 1)
-            // 5.      let sum = sum + shiftedx
-            // 6.   let shiftedx = 2*shiftedx
-            // 7. return sum
+            var int res, mask, shiftedx, i;
+            let i = 0;
+            let res = 0;
+            let mask = 1;
+            let shiftedx = x;
+            while (i < 16) {
+                if (~((mask & y) = 0)) {
+                    let res = res + shiftedx;
+                }
+                let mask = ^mask;
+                let shiftedx = ^shiftedx;
+                let i = i + 1;
+            }
+            return res;
         }
 
         /** 
@@ -51,6 +75,40 @@ class Math {
             // 4.   return 2*q
             // 5. else
             // 6.   return 2*q + 1
+            var bool flip_sign;
+            var int res;
+            let flip_sign = false;
+            if (x < 0) {
+                let x = -x;
+                let flip_sign = ~flip_sign;
+            }
+            if (y < 0) {
+                let y = -y;
+                let flip_sign = ~flip_sign;
+            }
+            let res = Math.divide_helper(x, y);
+            if (flip_sign) {
+                return -res;
+            }
+            return res;
+        }
+
+        function int divide_helper(int x, int y) {
+            var int q;
+            if ((y > x) | (y < 0)) {
+                let qy2 = 0;
+                return 0;
+            }
+            let q = Math.divide_helper(x, ^y);
+
+            if ((x - qy2) < y) {
+                return ^q;
+            }
+            else {
+                let qy2 = qy2 + y;
+                return (^q) + 1;
+            }
+
         }
 
         /** Returns the integer part of the square root of x. */
@@ -61,13 +119,50 @@ class Math {
             // 2. for j = (n/2 - 1) ... 0 do
             // 3.   if ((y + 2**j)**2 <= x) then let y = y + 2**j
             // 4. return y
+            var int y, j, ySquare, val;
+            if (x < 0) {
+                return 0;
+            }
+            let y = 0;
+            let ySquare = 0;
+            let j = 7; // Number of bits/2 - 1
+            while (j > -1) {
+                let val = ySquare + Math.shiftNtimes(y, j + 1) + twoToThe[^j];
+                if ((~(val > x)) & (val > 0)) {
+                    let ySquare = val;
+                    let y = y + twoToThe[j];
+                }
+                let j = j - 1;
+            }
+
+            return y;
+
+        }
+
+        function int shiftNtimes (int x, int n) {
+            var int i, shiftedx;
+            let i = 0;
+            let shiftedx = x;
+            while (i < n) {
+                let shiftedx = ^shiftedx;
+                let i = i + 1;
+            }
+            return shiftedx;
         }
 
         /** Returns the greater number. */
         function int max(int a, int b) {
+            if (a > b) {
+                return a;
+            }
+            return b;
         }
 
         /** Returns the smaller number. */
         function int min(int a, int b) {
+            if (a < b) {
+                return a;
+            }
+            return b;
         }
 }
