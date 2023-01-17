@@ -12,33 +12,62 @@
  * string-oriented operations.
  */
 class String {
+    field int maxLen;
+    field int curLen;
+    field Array charArr;
+
+    function void init() {
+        return;
+    }
+
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        let maxLen = maxLength;
+        let curLen = 0;
+        if (~(maxLength = 0)) {
+            let charArr = Array.new(maxLength);
+        }
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        if (~(maxLen = 0)) {
+            do charArr.dispose();
+        }
+        do Memory.deAlloc(this);
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return curLen;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return charArr[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
-    method void setCharAt(int j, char c) {
+    method void setCharAt(int j, char c){
+        let charArr[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        let charArr[curLen] = c;
+        let curLen = curLen + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        let curLen = curLen - 1;
+        let charArr[curLen] = 0;
+        return;
     }
 
     /** Returns the integer value of this string, 
@@ -50,10 +79,32 @@ class String {
         // 3.   let d = integer value of str.charAt(i)
         // 4.   let val = (val*10) + d
         // 5. return val
+        var int i, value, d;
+        if (charArr[0] = 45) {
+            let i = 1;
+        }
+        else {
+            let i = 0;
+        }
+        let value = 0;
+        while (i < curLen) {
+            if ((charArr[i] > 48) & (charArr[i] < 57)){
+                let d = charAt(i) - 48;
+                let value = (value * 10) + d;
+            }
+            else{
+                return value;
+            }
+            let i = i + 1;
+        }
+        if (charArr[0] = 45) {
+            let value = -value;
+        }
+        return value;
     }
 
     /** Sets this string to hold a representation of the given value. */
-    method void setInt(int val) {
+    method void setIntHelper(int val) {
         // Pseudocode:
         // 1. let lastDigit = val % 10
         // 2. let c = character representing lastDigit
@@ -61,17 +112,43 @@ class String {
         // 4.   return c (as a string)
         // 5. else
         // 6.   return int2String(val / 10).appendChar(c)
+        var int lastDigit, restOfNumber;
+        if (val < 10) {
+            do appendChar(48 + val);
+            return;
+        }
+
+        let restOfNumber = val / 10;
+        let lastDigit = val - (restOfNumber * 10);
+        do setIntHelper(restOfNumber);
+        do appendChar(48 + lastDigit);
+        return;
+    }
+
+    method void setInt (int val) {
+        let curLen = 0;
+        if (val < 0) {
+            do appendChar(45);
+            do setIntHelper(-val);
+        }
+        else {
+            do setIntHelper(val);
+        }
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
